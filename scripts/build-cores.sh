@@ -63,9 +63,19 @@ resolve_source() {
   fi
 
   local dest="$SOURCES/$id"
+  local ref="${RETRODROID_CORE_REF:-}"
   if [[ ! -d "$dest/.git" ]]; then
-    echo "  cloning https://github.com/$repo.git" >&2
-    git clone --depth 1 "https://github.com/$repo.git" "$dest" >&2 || return 1
+    if [[ -n "$ref" ]]; then
+      echo "  cloning https://github.com/$repo.git ($ref)" >&2
+      git clone --depth 1 --branch "$ref" "https://github.com/$repo.git" "$dest" >&2 || return 1
+    else
+      echo "  cloning https://github.com/$repo.git" >&2
+      git clone --depth 1 "https://github.com/$repo.git" "$dest" >&2 || return 1
+    fi
+  elif [[ -n "$ref" ]]; then
+    # The cache may predate the requested branch; follow it exactly.
+    git -C "$dest" fetch --depth 1 origin "$ref" >&2 &&
+      git -C "$dest" checkout -q FETCH_HEAD >&2 || return 1
   fi
   echo "$dest"
 }

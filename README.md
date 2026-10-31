@@ -97,10 +97,15 @@ cp cores/local.env.example cores/local.env
 
 Outputs land in `android/app/build/outputs/apk/`: per-ABI APKs
 (`arm64-v8a`, `x86_64`) plus the universal APK. CI builds the same set on every
-push and attaches the APKs to the release on `v*` tags; cores whose
-`android.json` profile is not merged yet are skipped there
-(`RETRODROID_SKIP_MISSING=1`) so the workflow stays green until the adaptation
-PRs land.
+push and attaches the APKs to the release on `v*` tags. Until the adaptation
+PRs are merged, CI and local builds take each core from its
+`feat/android-frontend` branch:
+
+```bash
+RETRODROID_CORE_REF=feat/android-frontend ./scripts/build-apk.sh
+```
+
+Drop the override to build from the repositories' default branches.
 
 ## Legal
 

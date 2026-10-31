@@ -2,7 +2,7 @@ name: android
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
@@ -43,6 +43,9 @@ jobs:
       - name: Build APKs
         env:
           RETRODROID_SKIP_MISSING: "1"
+          # Adapters live on this branch of each emulator repository until the
+          # adaptation PRs are merged; drop the variable once they are.
+          RETRODROID_CORE_REF: feat/android-frontend
         run: |
           export ANDROID_NDK_HOME="$(ls -d "$ANDROID_SDK_ROOT"/ndk/* | sort -V | tail -1)"
           ./scripts/build-apk.sh assembleRelease
