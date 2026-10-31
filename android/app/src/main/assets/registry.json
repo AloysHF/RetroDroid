@@ -5,19 +5,337 @@
       "id": "native32",
       "core": "native32emu",
       "so": "libnative32emu.so",
-      "short": "N32",
+      "short": "Native32",
       "manufacturer": "Sunplus",
       "names": {
         "en": "Native32",
         "zh": "Native32"
       },
-      "extensions": ["smf", "sgm", "ssl", "zip"],
+      "extensions": [
+        "smf",
+        "sgm",
+        "ssl",
+        "zip"
+      ],
       "firmware": [],
       "input": "dpad-ab-select",
       "orientation": "landscape",
       "notes": {
         "en": "Loads .smf, .sgm and .ssl content, or a .zip game package containing a whole collection.",
         "zh": "支持 .smf、.sgm、.ssl 内容，或包含整套游戏的 .zip 资源包。"
+      }
+    },
+    {
+      "id": "coolbar",
+      "core": "coolbaremu",
+      "so": "libcoolbaremu.so",
+      "short": "Coolbar",
+      "manufacturer": "Shanghai Coolbar",
+      "names": {
+        "en": "Coolbar",
+        "zh": "酷吧"
+      },
+      "extensions": [
+        "cbe"
+      ],
+      "firmware": [],
+      "input": "dpad-ab-lr-select",
+      "orientation": "portrait",
+      "notes": {
+        "en": "Loads .cbe Coolbar applications. Uses a phone keypad: D-pad, Confirm, soft keys and Select for the number layer. Most titles present a 240x400 portrait screen; landscape titles rotate automatically.",
+        "zh": "加载 .cbe 酷吧应用。操作对应手机键盘：方向键、确认键、左右软键，按住 Select 切换数字层。多数游戏为 240x400 竖屏，横屏游戏会自动旋转。"
+      }
+    },
+    {
+      "id": "dingoo",
+      "core": "dingooemu",
+      "so": "libdingooemu.so",
+      "short": "Dingoo",
+      "manufacturer": "Dingoo Digital",
+      "names": {
+        "en": "Dingoo A320 / Gemei A330",
+        "zh": "丁果 A320 / 歌美 A330"
+      },
+      "extensions": [
+        "app",
+        "cc",
+        "c2s",
+        "c3s"
+      ],
+      "firmware": [],
+      "input": "dpad-abcd-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Runs Dingoo A320 .app software and Gemei A330 .cc, .c2s and .c3s software. No BIOS or firmware file is required; battery saves go to the frontend save directory.",
+        "zh": "运行丁果 A320 的 .app 程序，以及歌美 A330 的 .cc、.c2s 和 .c3s 程序。无需 BIOS 或固件文件；电池存档写入前端的存档目录。"
+      }
+    },
+    {
+      "id": "hyperscan",
+      "core": "hyperscanemu",
+      "so": "libhyperscanemu.so",
+      "short": "HyperScan",
+      "manufacturer": "Mattel",
+      "names": {
+        "en": "HyperScan",
+        "zh": "HyperScan"
+      },
+      "extensions": [
+        "bin",
+        "cue",
+        "zip"
+      ],
+      "firmware": [
+        {
+          "file": "spg290.bin",
+          "required": true,
+          "hint": {
+            "en": "SPG290 internal ROM, exactly 32768 bytes. Copy it into the system directory.",
+            "zh": "SPG290 内部 ROM，大小必须为 32768 字节。请放入系统目录。"
+          }
+        },
+        {
+          "file": "hyperscan.bin",
+          "required": true,
+          "hint": {
+            "en": "HyperScan BIOS, exactly 1048576 bytes. Copy it into the system directory.",
+            "zh": "HyperScan BIOS，大小必须为 1048576 字节。请放入系统目录。"
+          }
+        }
+      ],
+      "input": "dpad-abcd-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Mattel HyperScan (Sunplus SPG290) with RFID card games. Requires spg290.bin and hyperscan.bin firmware; loads .bin, .cue or .zip disc images.",
+        "zh": "Mattel HyperScan（凌阳 SPG290）主机，支持 RFID 卡牌游戏。需要 spg290.bin 与 hyperscan.bin 固件；可加载 .bin、.cue 或 .zip 光盘镜像。"
+      }
+    },
+    {
+      "id": "lavax",
+      "core": "lavaxemu",
+      "so": "liblavaxemu.so",
+      "short": "LavaX",
+      "manufacturer": "Various",
+      "names": {
+        "en": "LavaX",
+        "zh": "LavaX"
+      },
+      "extensions": [
+        "lav"
+      ],
+      "firmware": [],
+      "input": "dpad-abcd-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Runs LavaX .lav programs with companion files from the same folder, joypad and pointer input, and save states.",
+        "zh": "运行 LavaX .lav 程序，支持同目录附属文件、手柄与触摸输入以及即时存档。"
+      }
+    },
+    {
+      "id": "playdia",
+      "core": "playdiaemu",
+      "so": "libplaydiaemu.so",
+      "short": "Playdia",
+      "manufacturer": "Bandai",
+      "names": {
+        "en": "Playdia",
+        "zh": "万代 Playdia"
+      },
+      "extensions": [
+        "cue",
+        "bin",
+        "iso",
+        "img",
+        "zip"
+      ],
+      "firmware": [],
+      "input": "dpad-ab-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Loads a .cue with its .bin tracks, a single .iso/.bin/.img image, or a Redump-style .zip containing the CUE/BIN set. No BIOS is required.",
+        "zh": "支持 .cue 及其 .bin 轨道、单文件 .iso/.bin/.img，或包含 CUE/BIN 的 Redump 风格 .zip；无需 BIOS。"
+      }
+    },
+    {
+      "id": "spmp8000",
+      "core": "spmp8000emu",
+      "so": "libspmp8000emu.so",
+      "short": "SPMP8000",
+      "manufacturer": "Sunplus",
+      "names": {
+        "en": "SPMP8000",
+        "zh": "凌阳 SPMP8000"
+      },
+      "extensions": [
+        "bin"
+      ],
+      "firmware": [],
+      "input": "dpad-ab-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Loads NGame .bin games for Sunplus SPMP8000 handhelds and MP4 players. No firmware or BIOS files are required; the core writes no battery saves.",
+        "zh": "加载凌阳 SPMP8000 掌机与 MP4 播放器的 NGame .bin 游戏。无需固件或 BIOS 文件，核心不写入电池存档。"
+      }
+    },
+    {
+      "id": "wqx",
+      "core": "wqxemu",
+      "so": "libwqxemu.so",
+      "short": "WQX",
+      "manufacturer": "Wenquxing",
+      "names": {
+        "en": "Wenquxing (WQX)",
+        "zh": "文曲星 (WQX)"
+      },
+      "extensions": [
+        "rom",
+        "bin",
+        "fls",
+        "nor",
+        "nand",
+        "nand0"
+      ],
+      "firmware": [
+        {
+          "file": "WQXEmu/nc1020/obj_lu.bin",
+          "required": true,
+          "hint": {
+            "en": "NC1020 system ROM (obj_lu.bin); needed when the NC1020 model is selected.",
+            "zh": "NC1020 系统 ROM（obj_lu.bin）；选择 NC1020 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc1020/nc1020.fls",
+          "required": true,
+          "hint": {
+            "en": "NC1020 NOR Flash dump; needed when the NC1020 model is selected.",
+            "zh": "NC1020 NOR Flash 转储；选择 NC1020 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/pc1000/pc1000.rom",
+          "required": false,
+          "hint": {
+            "en": "PC1000 system ROM dump; needed when the PC1000 model is selected.",
+            "zh": "PC1000 系统 ROM 转储；选择 PC1000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/pc1000/pc1000.nor",
+          "required": false,
+          "hint": {
+            "en": "PC1000 NOR Flash dump; needed when the PC1000 model is selected.",
+            "zh": "PC1000 NOR Flash 转储；选择 PC1000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/cc800/obj.bin",
+          "required": false,
+          "hint": {
+            "en": "CC800 system ROM (obj.bin); needed when the CC800 model is selected.",
+            "zh": "CC800 系统 ROM（obj.bin）；选择 CC800 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/cc800/cc800.fls",
+          "required": false,
+          "hint": {
+            "en": "CC800 NOR Flash dump; needed when the CC800 model is selected.",
+            "zh": "CC800 NOR Flash 转储；选择 CC800 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc2000/nc2000.nor",
+          "required": false,
+          "hint": {
+            "en": "NC2000 NOR Flash dump; needed when the NC2000 model is selected.",
+            "zh": "NC2000 NOR Flash 转储；选择 NC2000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc2000/nc2000.nand",
+          "required": false,
+          "hint": {
+            "en": "NC2000 NAND Flash dump; needed when the NC2000 model is selected.",
+            "zh": "NC2000 NAND Flash 转储；选择 NC2000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc2000/nc2000.nand0",
+          "required": false,
+          "hint": {
+            "en": "NC2000 first NAND plane; needed when the NC2000 model is selected.",
+            "zh": "NC2000 第一 NAND 平面；选择 NC2000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc3000/nc3000.nor",
+          "required": false,
+          "hint": {
+            "en": "NC3000 NOR Flash dump; needed when the NC3000 model is selected.",
+            "zh": "NC3000 NOR Flash 转储；选择 NC3000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc3000/nc3000.nand",
+          "required": false,
+          "hint": {
+            "en": "NC3000 NAND Flash dump; needed when the NC3000 model is selected.",
+            "zh": "NC3000 NAND Flash 转储；选择 NC3000 机型时需要。"
+          }
+        },
+        {
+          "file": "WQXEmu/nc3000/nc3000.nand0",
+          "required": false,
+          "hint": {
+            "en": "NC3000 first NAND plane; optional, used when the dump provides it.",
+            "zh": "NC3000 第一 NAND 平面；可选，有对应转储时会使用。"
+          }
+        }
+      ],
+      "input": "qwerty",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Boots the original firmware of Wenquxing NC1020, PC1000, CC800, NC2000 and NC3000 electronic dictionaries. Firmware is user-supplied: put the dumps of the chosen model under the system directory as WQXEmu/<model>/ and pick the model in core options. Input uses the libretro keyboard interface, with the directional keys also mapped to the RetroPad.",
+        "zh": "运行文曲星 NC1020、PC1000、CC800、NC2000、NC3000 电子词典的原机固件。固件需用户自备：把所选机型的转储放到系统目录 WQXEmu/<model>/ 下，并在核心选项中选中机型。输入使用 libretro 键盘接口，方向键同时映射到 RetroPad。"
+      }
+    },
+    {
+      "id": "bbk",
+      "core": "bbkemu",
+      "so": "libbbkemu.so",
+      "short": "BBK",
+      "manufacturer": "BBK Electronics",
+      "names": {
+        "en": "BBK Electronic Dictionary",
+        "zh": "步步高电子词典"
+      },
+      "extensions": [
+        "gam"
+      ],
+      "firmware": [
+        {
+          "file": "8.BIN",
+          "required": true,
+          "hint": {
+            "en": "Font ROM from a BBK A4980 device. Keep the original name 8.BIN.",
+            "zh": "来自步步高 A4980 的字体 ROM，文件名必须保持为 8.BIN。"
+          }
+        },
+        {
+          "file": "E.BIN",
+          "required": true,
+          "hint": {
+            "en": "OS ROM from a BBK A4980 device. Keep the original name E.BIN.",
+            "zh": "来自步步高 A4980 的系统 ROM，文件名必须保持为 E.BIN。"
+          }
+        }
+      ],
+      "input": "dpad-abcd-select",
+      "orientation": "landscape",
+      "notes": {
+        "en": "Runs .gam dictionary games on a 159x96 LCD. Requires 8.BIN and E.BIN firmware from a BBK A4980/A4988. A is Enter, B is Exit, Y is Help, X is the R key, Select is Insert and Start is Search.",
+        "zh": "运行 .gam 电子词典游戏，屏幕为 159x96。需要步步高 A4980/A4988 的 8.BIN 与 E.BIN 固件。A 为确认，B 为退出，Y 为帮助，X 为 R 键，Select 为插入，Start 为查找。"
       }
     }
   ]
