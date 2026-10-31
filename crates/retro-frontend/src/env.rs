@@ -160,16 +160,55 @@ pub fn options_json() -> String {
     options::to_json(&lock(env()).options)
 }
 
-unsafe extern "C" fn log_callback(level: u32, fmt: *const c_char) {    if fmt.is_null() {
-        return;
-    }
-    // SAFETY: the core passes a NUL-terminated format string.
-    let text = unsafe { CStr::from_ptr(fmt) }.to_string_lossy();
+fn emit_log(level: u32, text: &str) {
     match level {
         0 => log::debug!("[core] {text}"),
         1 => log::info!("[core] {text}"),
         2 => log::warn!("[core] {text}"),
         _ => log::error!("[core] {text}"),
+    }
+}
+
+#[cfg(target_os = "android")]
+unsafe extern "C" fn log_sink(level: u32, text: *const c_char) {
+    if text.is_null() {
+        return;
+    }
+    // SAFETY: the shim always hands over a NUL-terminated buffer.
+    let text = unsafe { CStr::from_ptr(text) }.to_string_lossy();
+    emit_log(level, &text);
+}
+
+/// Formats the core's printf-style log calls on the C side and forwards the
+/// result to [`log_sink`].
+#[cfg(target_os = "android")]
+mod log_shim {
+    use std::ffi::c_char;
+    use std::sync::Once;
+
+    use super::{log_sink, retro_log_printf_t};
+
+    unsafe extern "C" {
+        fn retrodroid_log_printf(level: u32, fmt: *const c_char, ...);
+        fn retrodroid_log_set_sink(callback: Option<unsafe extern "C" fn(u32, *const c_char)>);
+    }
+
+    pub fn callback() -> retro_log_printf_t {
+        static SET: Once = Once::new();
+        SET.call_once(|| unsafe { retrodroid_log_set_sink(Some(log_sink)) });
+        retrodroid_log_printf
+    }
+}
+
+fn log_callback() -> Option<retro_log_printf_t> {
+    #[cfg(target_os = "android")]
+    {
+        Some(log_shim::callback())
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        // Host builds (tests) have no C shim; the core simply logs nowhere.
+        None
     }
 }
 
@@ -347,7 +386,7 @@ pub unsafe extern "C" fn environment(cmd: u32, data: *mut c_void) -> bool {
                 return false;
             }
             *(data as *mut retro_log_callback) = retro_log_callback {
-                log: Some(log_callback),
+                log: log_callback(),
             };
             true
         }

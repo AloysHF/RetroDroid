@@ -184,12 +184,9 @@ pub struct retro_message {
     pub frames: u32,
 }
 
-/// Simplified log callback.
-///
-/// The real `retro_log_printf_t` is variadic. RetroDroid and the cores in this
-/// family share the non-variadic shape documented in `docs/Core-Contract.md`;
-/// a variadic call still arrives intact on every supported ABI.
-pub type retro_log_printf_t = unsafe extern "C" fn(level: u32, fmt: *const c_char);
+/// `retro_log_printf_t` is printf-style. The Android build formats the
+/// arguments in `csrc/log_shim.c`; other targets use a plain message callback.
+pub type retro_log_printf_t = unsafe extern "C" fn(level: u32, fmt: *const c_char, ...);
 
 #[repr(C)]
 pub struct retro_log_callback {
