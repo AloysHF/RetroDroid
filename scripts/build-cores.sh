@@ -96,7 +96,7 @@ build_core() {
     return 1
   fi
   crate_dir="$(dirname "$profile")"
-  package="$(package_of "$crate_dir/Cargo.toml")"
+  package="$(package_of "$crate_dir")"
   if [[ -z "$package" ]]; then
     echo "  cannot read the crate package name from $crate_dir/Cargo.toml" >&2
     return 1
