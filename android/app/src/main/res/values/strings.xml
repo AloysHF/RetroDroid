@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RetroDroid</string>
+    <string name="tagline">All-in-one retro handheld emulator</string>
+
+    <string name="systems_title">Systems</string>
+    <string name="systems_empty">No emulator cores are bundled in this build.</string>
+    <string name="choose_folder">Choose game folder</string>
+    <string name="change_folder">Change folder</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_folder">No game folder selected. Pick the folder that contains your ROMs.</string>
+    <string name="no_games">No games found in this folder.</string>
+    <string name="game_count">%1$d games</string>
+    <string name="scanning">Scanning…</string>
+    <string name="system_extensions">Supported files: %1$s</string>
+    <string name="games_title">%1$s games</string>
+
+    <string name="firmware_title">Firmware</string>
+    <string name="firmware_missing">Required firmware is missing: %1$s</string>
+    <string name="firmware_ready">Firmware is ready.</string>
+    <string name="import_firmware">Import firmware</string>
+    <string name="firmware_pick">Select the firmware files to import</string>
+    <string name="firmware_imported">Firmware imported.</string>
+    <string name="firmware_failed">Could not import firmware.</string>
+
+    <string name="loading">Loading…</string>
+    <string name="load_failed">Could not start the game.</string>
+    <string name="preparing">Preparing game…</string>
+    <string name="back">Back</string>
+    <string name="menu">Menu</string>
+    <string name="paused">Paused</string>
+    <string name="resume">Resume</string>
+    <string name="save_state">Save state</string>
+    <string name="load_state">Load state</string>
+    <string name="reset">Reset</string>
+    <string name="exit_game">Exit game</string>
+    <string name="core_options">Core options</string>
+    <string name="no_core_options">This core has no options.</string>
+    <string name="options_live_note">Changes apply immediately.</string>
+    <string name="rotation">Rotation</string>
+    <string name="scaling">Scaling</string>
+    <string name="scaling_fit">Fit</string>
+    <string name="scaling_stretch">Stretch</string>
+    <string name="scaling_integer">Integer</string>
+    <string name="state_saved">State saved.</string>
+    <string name="state_loaded">State loaded.</string>
+    <string name="state_save_failed">Could not save the state.</string>
+    <string name="state_load_failed">Could not load the state.</string>
+    <string name="no_state">No save state for this game yet.</string>
+    <string name="select">Select</string>
+    <string name="start">Start</string>
+    <string name="keyboard">Keyboard</string>
+    <string name="rom_legal_note">ROMs and firmware are not included. Only run content you own.</string>
+    <string name="exit_confirm">Exit the game?</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">OK</string>
+    <string name="core_label">Core: %1$s</string>
+</resources>

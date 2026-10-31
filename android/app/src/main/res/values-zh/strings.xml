@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RetroDroid</string>
+    <string name="tagline">一体化复古掌机模拟器</string>
+
+    <string name="systems_title">游戏机</string>
+    <string name="systems_empty">此版本没有内置任何模拟器核心。</string>
+    <string name="choose_folder">选择游戏目录</string>
+    <string name="change_folder">更换目录</string>
+    <string name="refresh">刷新</string>
+    <string name="no_folder">尚未选择游戏目录，请选择存放 ROM 的文件夹。</string>
+    <string name="no_games">此目录中没有找到游戏。</string>
+    <string name="game_count">%1$d 个游戏</string>
+    <string name="scanning">扫描中…</string>
+    <string name="system_extensions">支持的文件：%1$s</string>
+    <string name="games_title">%1$s 游戏</string>
+
+    <string name="firmware_title">固件</string>
+    <string name="firmware_missing">缺少必需固件：%1$s</string>
+    <string name="firmware_ready">固件已就绪。</string>
+    <string name="import_firmware">导入固件</string>
+    <string name="firmware_pick">选择要导入的固件文件</string>
+    <string name="firmware_imported">固件已导入。</string>
+    <string name="firmware_failed">固件导入失败。</string>
+
+    <string name="loading">加载中…</string>
+    <string name="load_failed">无法启动游戏。</string>
+    <string name="preparing">正在准备游戏…</string>
+    <string name="back">返回</string>
+    <string name="menu">菜单</string>
+    <string name="paused">已暂停</string>
+    <string name="resume">继续游戏</string>
+    <string name="save_state">存档</string>
+    <string name="load_state">读档</string>
+    <string name="reset">重置</string>
+    <string name="exit_game">退出游戏</string>
+    <string name="core_options">核心设置</string>
+    <string name="no_core_options">此核心没有可配置项。</string>
+    <string name="options_live_note">修改立即生效。</string>
+    <string name="rotation">画面旋转</string>
+    <string name="scaling">画面缩放</string>
+    <string name="scaling_fit">适应</string>
+    <string name="scaling_stretch">拉伸</string>
+    <string name="scaling_integer">整数倍</string>
+    <string name="state_saved">已存档。</string>
+    <string name="state_loaded">已读档。</string>
+    <string name="state_save_failed">存档失败。</string>
+    <string name="state_load_failed">读档失败。</string>
+    <string name="no_state">此游戏还没有存档。</string>
+    <string name="select">选择</string>
+    <string name="start">开始</string>
+    <string name="keyboard">键盘</string>
+    <string name="rom_legal_note">不附带游戏 ROM 与固件，请仅运行你合法拥有的内容。</string>
+    <string name="exit_confirm">要退出游戏吗？</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确定</string>
+    <string name="core_label">核心：%1$s</string>
+</resources>
