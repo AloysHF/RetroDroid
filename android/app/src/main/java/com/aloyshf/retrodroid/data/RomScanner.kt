@@ -50,4 +50,31 @@ object RomScanner {
 
     fun folderName(context: Context, treeUri: Uri): String? =
         DocumentFile.fromTreeUri(context, treeUri)?.name
+
+    /**
+     * Files that sit in the same directory as [target]. Cores for CD-based
+     * systems open a cue sheet that names its tracks, so the tracks have to
+     * land beside the copy of the cue sheet in the cache.
+     */
+    suspend fun siblings(context: Context, treeUri: Uri, target: Uri): List<RomEntry> =
+        withContext(Dispatchers.IO) {
+            val root = DocumentFile.fromTreeUri(context, treeUri) ?: return@withContext emptyList()
+            val queue = ArrayDeque<DocumentFile>()
+            queue.addLast(root)
+            var visited = 0
+            while (queue.isNotEmpty() && visited++ < LIMIT_DIRECTORIES) {
+                val dir = queue.removeFirst()
+                val children = runCatching { dir.listFiles() }.getOrNull() ?: continue
+                val files = children.filter { !it.isDirectory }
+                if (files.any { it.uri == target }) {
+                    return@withContext files.mapNotNull { file ->
+                        file.name?.let { RomEntry(file.uri, it, file.length()) }
+                    }
+                }
+                children.filter { it.isDirectory }.forEach(queue::addLast)
+            }
+            emptyList()
+        }
+
+    private const val LIMIT_DIRECTORIES = 4000
 }

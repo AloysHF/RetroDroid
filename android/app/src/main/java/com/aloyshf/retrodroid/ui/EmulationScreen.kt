@@ -58,6 +58,7 @@ import com.aloyshf.retrodroid.audio.AudioPlayer
 import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
+import com.aloyshf.retrodroid.data.RomScanner
 import com.aloyshf.retrodroid.data.Scaling
 import com.aloyshf.retrodroid.data.SessionFiles
 import com.aloyshf.retrodroid.model.CoreOption
@@ -111,7 +112,12 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
         var prepared: File? = null
         val result = withContext(Dispatchers.IO) {
             runCatching {
-                val content = SessionFiles.prepareContent(context, game.uri, game.name)
+                val content = SessionFiles.prepareContent(
+                    context,
+                    game.uri,
+                    game.name,
+                    RomScanner.siblings(context, treeUri, game.uri),
+                )
                 prepared = content.cacheDir
                 val corePath = File(context.applicationInfo.nativeLibraryDir, system.soName).absolutePath
                 val systemDir = SessionFiles.systemDir(context, system.core)
