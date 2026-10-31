@@ -56,6 +56,21 @@ landed incrementally; see `git log` for the current state.
 The interface every core must satisfy is documented in
 [docs/Core-Contract.md](docs/Core-Contract.md).
 
+## Using the app
+
+1. On the home screen pick the folder that holds the ROMs of a system
+   (`SAF` - Downloads, an SD card or a USB drive). The choice is remembered.
+2. Systems that need firmware show a banner on their game list. Import the
+   files from there; a picked file is matched against the names in the core
+   profile, so files land in the folders the core looks in (some systems keep
+   one folder per model).
+3. Select a game to start it. The pause menu offers save states, core options,
+   scaling and screen rotation; the back gesture returns to the game list.
+
+For disc-based systems select the `.cue` sheet: the tracks it references are
+copied next to it automatically, so a folder holding several discs only
+transfers the one being played.
+
 ## Building
 
 Requirements: Rust with the Android targets, the Android NDK (r27+), JDK 17+,

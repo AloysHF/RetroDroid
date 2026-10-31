@@ -20,6 +20,8 @@ without per-app patches.
   file and several data files). RetroDroid copies the user's selection out of
   SAF into an app-private cache directory before loading, so the core may use
   relative paths, `std::fs::read_dir` and any other filesystem API freely.
+  When the selection is a `.cue` sheet, the tracks it names are copied beside
+  it; no other file from the folder is copied.
 - Archives (`.zip`) are passed to the core untouched only when the core lists
   `zip` in `valid_extensions` and can boot a package itself. Otherwise
   RetroDroid extracts the archive into the cache directory first.
@@ -62,6 +64,10 @@ without per-app patches.
   (`RETRO_ENVIRONMENT_GET_LOG_INTERFACE`) and to the user through
   `RETRO_ENVIRONMENT_SET_MESSAGE` before returning `false` from
   `retro_load_game()`. A silent `false` is a contract violation.
+- The log callback is the standard printf-style
+  `void (*)(enum retro_log_level, const char *fmt, ...)`. RetroDroid formats
+  the arguments before displaying the message, so `log_cb(level, "%s", text)`
+  and a plain format string both work.
 - No entry point may unwind across the C ABI. Wrap fallible bodies in
   `std::panic::catch_unwind` and return a neutral value (`false`, `0`, silence)
   on panic.
