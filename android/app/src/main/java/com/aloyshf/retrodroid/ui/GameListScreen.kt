@@ -83,13 +83,22 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
     val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNullOrEmpty()) return@rememberLauncherForActivityResult
         val target = SessionFiles.systemDir(context, system.core)
+        val expectedByName = system.firmware.groupBy { File(it.file).name.lowercase() }
         var copied = 0
         for (uri in uris) {
             val name = (DocumentFile.fromSingleUri(context, uri)?.name ?: uri.lastPathSegment)?.takeIf { it.isNotBlank() } ?: continue
+            val fileName = File(name).name
+            // Firmware profiles may name a path below the system directory
+            // (WQX keeps one folder per model); match the picked file against
+            // those names and create the folders it needs.
+            val destinations = expectedByName[fileName.lowercase()]?.map { it.file } ?: listOf(fileName)
             val ok = runCatching {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    File(target, File(name).name).outputStream().use { output -> input.copyTo(output) }
-                } ?: error("unreadable")
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("unreadable")
+                destinations.forEach { relative ->
+                    val out = File(target, relative)
+                    out.parentFile?.mkdirs()
+                    out.writeBytes(bytes)
+                }
             }.isSuccess
             if (ok) copied++
         }
@@ -153,10 +162,11 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (missingFirmware.isNotEmpty()) {
+            if (system.firmware.isNotEmpty()) {
                 FirmwareBanner(
                     names = missingFirmware.map { it.file },
                     hints = missingFirmware.map { it.hint(language) }.filter { it.isNotBlank() },
+                    ready = missingFirmware.isEmpty(),
                     onImport = { firmwarePicker.launch(arrayOf("*/*")) },
                 )
             }
@@ -206,14 +216,19 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
 }
 
 @Composable
-private fun FirmwareBanner(names: List<String>, hints: List<String>, onImport: () -> Unit) {
+private fun FirmwareBanner(names: List<String>, hints: List<String>, ready: Boolean, onImport: () -> Unit) {
+    val colors = if (ready) {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    } else {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f))
+    }
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)),
+        colors = colors,
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                stringResource(R.string.firmware_missing, names.joinToString(", ")),
+                if (ready) stringResource(R.string.firmware_ready) else stringResource(R.string.firmware_missing, names.joinToString(", ")),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
