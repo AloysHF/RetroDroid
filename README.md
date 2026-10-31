@@ -67,13 +67,25 @@ cargo install cargo-ndk
 export ANDROID_NDK_HOME=/path/to/android-ndk
 export ANDROID_SDK_ROOT=/path/to/android-sdk
 
-# Fetch and build every core, stage them into jniLibs, then assemble the APK.
-./scripts/build-apk.sh
+# Build the frontend, every core and the APKs.
+./scripts/build-apk.sh                    # debug
+./scripts/build-apk.sh assembleRelease    # release
 ```
 
-Outputs land in `android/app/build/outputs/apk/`. Per-ABI APKs
-(`arm64-v8a`, `x86_64`) are produced by default; `--universal` also builds the
-combined APK.
+The core sources are cloned from GitHub into `build/sources/`. While a core
+adaptation is still unmerged, point the script at your local checkout instead:
+
+```bash
+cp cores/local.env.example cores/local.env
+# RETRODROID_NATIVE32_SOURCE=/path/to/Native32Emu
+```
+
+Outputs land in `android/app/build/outputs/apk/`: per-ABI APKs
+(`arm64-v8a`, `x86_64`) plus the universal APK. CI builds the same set on every
+push and attaches the APKs to the release on `v*` tags; cores whose
+`android.json` profile is not merged yet are skipped there
+(`RETRODROID_SKIP_MISSING=1`) so the workflow stays green until the adaptation
+PRs land.
 
 ## Legal
 
