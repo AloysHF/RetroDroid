@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Builds every libretro core for Android and aggregates their profiles.
 #
-# Sources are taken from $RETRODROID_<ID>_SOURCE when set (useful while the
-# adaptation PRs are unmerged), otherwise they are cloned from GitHub into
+# Sources are taken from $RETRODROID_<ID>_SOURCE when set (to build a local
+# checkout), otherwise each repository's default branch is cloned into
 # build/sources/<id>.
 set -euo pipefail
 
@@ -63,19 +63,9 @@ resolve_source() {
   fi
 
   local dest="$SOURCES/$id"
-  local ref="${RETRODROID_CORE_REF:-}"
   if [[ ! -d "$dest/.git" ]]; then
-    if [[ -n "$ref" ]]; then
-      echo "  cloning https://github.com/$repo.git ($ref)" >&2
-      git clone --depth 1 --branch "$ref" "https://github.com/$repo.git" "$dest" >&2 || return 1
-    else
-      echo "  cloning https://github.com/$repo.git" >&2
-      git clone --depth 1 "https://github.com/$repo.git" "$dest" >&2 || return 1
-    fi
-  elif [[ -n "$ref" ]]; then
-    # The cache may predate the requested branch; follow it exactly.
-    git -C "$dest" fetch --depth 1 origin "$ref" >&2 &&
-      git -C "$dest" checkout -q FETCH_HEAD >&2 || return 1
+    echo "  cloning https://github.com/$repo.git" >&2
+    git clone --depth 1 "https://github.com/$repo.git" "$dest" >&2 || return 1
   fi
   echo "$dest"
 }

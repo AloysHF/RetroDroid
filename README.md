@@ -87,8 +87,8 @@ export ANDROID_SDK_ROOT=/path/to/android-sdk
 ./scripts/build-apk.sh assembleRelease    # release
 ```
 
-The core sources are cloned from GitHub into `build/sources/`. While a core
-adaptation is still unmerged, point the script at your local checkout instead:
+The core sources are cloned from GitHub into `build/sources/`. To build a core
+from a local checkout instead:
 
 ```bash
 cp cores/local.env.example cores/local.env
@@ -97,15 +97,7 @@ cp cores/local.env.example cores/local.env
 
 Outputs land in `android/app/build/outputs/apk/`: per-ABI APKs
 (`arm64-v8a`, `x86_64`) plus the universal APK. CI builds the same set on every
-push and attaches the APKs to the release on `v*` tags. Until the adaptation
-PRs are merged, CI and local builds take each core from its
-`feat/android-frontend` branch:
-
-```bash
-RETRODROID_CORE_REF=feat/android-frontend ./scripts/build-apk.sh
-```
-
-Drop the override to build from the repositories' default branches.
+push and attaches the APKs to the release on `v*` tags.
 
 ## Legal
 
