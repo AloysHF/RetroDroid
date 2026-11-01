@@ -163,8 +163,8 @@ generate the system registry; nothing else is hard-coded in the app.
 | `system` | System id shown in the app. Usually equals `core`. |
 | `display_name` | Bilingual names. |
 | `supported_extensions` | Superset of the core's `valid_extensions`; used for ROM discovery only. Empty for firmware-only systems. |
-| `no_game` | `true` when the core boots without content (`retro_load_game(NULL)`); RetroDroid then shows a model selector and a **Start firmware** button instead of a game list. |
-| `boot_options` | Model choices shown before boot: `[{ "key": "wqxemu_model", "label": { "en": "...", "zh": "..." }, "values": ["nc1020", "..."] }]`. The first value is the default; the selection is stored as the core option `key`. |
+| `no_game` | `true` when the core boots without content (`retro_load_game(NULL)`); RetroDroid then lists every model from `boot_options` instead of a game list, each row showing the `BIOS/<system>/` folder of its dumps and whether that firmware is present, followed by a **Start firmware** button. |
+| `boot_options` | Model choices shown before boot: `[{ "key": "wqxemu_model", "label": { "en": "...", "zh": "..." }, "values": ["nc1020", "..."] }]`. The first value is the default; the selection is stored as the core option `key`. Each value also selects the firmware in `firmware` whose folder matches it. |
 | `save_state_format` | Version written into save-state envelopes; must match the core. |
 | `firmware` | Files the core reads from the system directory, relative to the shared system root: `[{ "file": "wqxemu/nc1020/obj_lu.bin", "required": true, "hint": { "en": "...", "zh": "..." } }]`. RetroDroid shows the same path below `BIOS/<system>/` with the leading core folder hidden. `required: false` marks an optional support file (for example `coolbaremu/coolbaremu_orientation.csv`): it is copied when present and never blocks loading. |
 | `input.preset` | Frontend layout id: `dpad-ab-select`, `dpad-abcd-select`, `dpad-ab-lr-select`, `qwerty`. |

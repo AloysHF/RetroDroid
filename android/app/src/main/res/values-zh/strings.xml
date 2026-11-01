@@ -44,6 +44,8 @@
     <string name="firmware_failed">固件导入失败。</string>
     <string name="boot_firmware">启动固件</string>
     <string name="boot_firmware_waiting">请先导入上面的固件文件。</string>
+    <string name="model_firmware_ready">固件就绪</string>
+    <string name="model_firmware_missing">缺少固件：%1$s</string>
 
     <string name="loading">加载中…</string>
     <string name="load_failed">无法启动游戏。</string>

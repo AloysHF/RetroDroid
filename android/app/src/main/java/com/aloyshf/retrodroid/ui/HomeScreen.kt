@@ -137,6 +137,7 @@ fun HomeScreen(
                     label = "ROMs/${system.id}",
                     count = row?.count,
                     firmwareMissing = row?.firmwareMissing == true,
+                    models = remember(system) { system.models().map { it.label } },
                     onClick = { onOpenSystem(system) },
                 )
             }
@@ -193,6 +194,7 @@ private fun SystemCard(
     label: String,
     count: Int?,
     firmwareMissing: Boolean,
+    models: List<String>,
     onClick: () -> Unit,
 ) {
     Card(
@@ -227,7 +229,9 @@ private fun SystemCard(
                 )
                 val details = listOfNotNull(
                     system.manufacturer.takeIf { it.isNotBlank() },
-                    system.extensions.joinToString(" · "),
+                    // Firmware-only systems have no extensions; skip the
+                    // separator instead of leaving a dangling one.
+                    system.extensions.takeIf { it.isNotEmpty() }?.joinToString(" · "),
                 ).joinToString("  ·  ")
                 if (details.isNotBlank()) {
                     Text(
@@ -235,6 +239,17 @@ private fun SystemCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (models.isNotEmpty()) {
+                    // Systems whose firmware comes in per-model dumps (WQX)
+                    // list every supported model, not just the booted one.
+                    Text(
+                        models.joinToString(" · "),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }

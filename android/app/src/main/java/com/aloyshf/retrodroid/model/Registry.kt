@@ -12,7 +12,26 @@ data class FirmwareFile(
 ) {
     fun hint(language: String): String =
         if (language.startsWith("zh")) hintZh.ifBlank { hintEn } else hintEn
+
+    /**
+     * Folder that holds this file, which is the model folder for per-model
+     * dumps (`wqxemu/nc1020/obj_lu.bin` -> `nc1020`).
+     */
+    fun folder(): String =
+        file.substringBeforeLast('/', "").substringAfterLast('/', "")
 }
+
+/**
+ * One selectable machine model of a system whose firmware comes in per-model
+ * dumps, e.g. a WQX NC1020 or PC1000. [value] is the boot option value the core
+ * expects, [folder] the folder below `BIOS/<system>/` that holds its dumps.
+ */
+data class ModelOption(
+    val value: String,
+    val label: String,
+    val folder: String,
+    val firmware: List<FirmwareFile>,
+)
 
 data class BootOption(
     val key: String,
@@ -50,6 +69,25 @@ data class SystemInfo(
     fun accepts(fileName: String): Boolean {
         val extension = fileName.substringAfterLast('.', "").lowercase(Locale.ROOT)
         return extension.isNotEmpty() && extensions.any { it.equals(extension, ignoreCase = true) }
+    }
+
+    /**
+     * Machine models offered by the first boot option, each with the firmware
+     * files it needs. Empty for systems that are not model-based. Models are
+     * labelled in upper case because dumps name them that way (nc1020 ->
+     * NC1020), while [ModelOption.folder] keeps the exact on-disk name.
+     */
+    fun models(): List<ModelOption> {
+        val values = bootOptions.firstOrNull()?.values ?: return emptyList()
+        return values.map { value ->
+            val files = firmware.filter { it.folder() == value }
+            ModelOption(
+                value = value,
+                label = value.uppercase(Locale.ROOT),
+                folder = files.firstOrNull()?.folder() ?: value,
+                firmware = files,
+            )
+        }
     }
 }
 

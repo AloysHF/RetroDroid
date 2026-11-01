@@ -98,10 +98,11 @@ there is nothing to pick on every launch:
    the shared private system root on refresh, where every core reads
    `<system>/<core>/…` (for example `bbkemu/a4980/8.BIN`). Only systems with
    support files get a `BIOS/<system>/` folder.
-3. Select a game to start it. WQX has no game content: pick the machine model
-   and press **Start firmware**. The pause menu offers save states, core
-   options, scaling and screen rotation; the back gesture returns to the game
-   list.
+3. Select a game to start it. WQX has no game content: every supported model is
+   listed on its own row with the folder its dumps belong to and whether that
+   firmware is present, so pick the model and press **Start firmware**. The
+   pause menu offers save states, core options, scaling and screen rotation;
+   the back gesture returns to the game list.
 
 Games are opened in place from the library. Folders below `ROMs/<system>/` are
 listed before the games of the current folder and open one level at a time, so

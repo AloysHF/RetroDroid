@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,14 +19,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,6 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -52,7 +58,8 @@ import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.RomTree
 import com.aloyshf.retrodroid.data.SessionFiles
-import com.aloyshf.retrodroid.model.BootOption
+import com.aloyshf.retrodroid.model.FirmwareFile
+import com.aloyshf.retrodroid.model.ModelOption
 import com.aloyshf.retrodroid.model.SystemInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -79,8 +86,15 @@ fun GameListScreen(
     var scanning by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
     var firmwareVersion by remember { mutableIntStateOf(0) }
+    val models = remember(system) { system.models() }
     var model by remember(system.id) {
-        mutableStateOf(system.defaultBootValue(prefs))
+        mutableStateOf(
+            // Ignore a stored value the profile no longer offers so the panel
+            // never starts with nothing selected.
+            system.defaultBootValue(prefs).takeIf { value -> models.any { it.value == value } }
+                ?: models.firstOrNull()?.value
+                ?: "",
+        )
     }
 
     OnResume {
@@ -141,17 +155,20 @@ fun GameListScreen(
         if (!scanning && !RomTree.exists(games, folder)) onFolder("")
     }
 
-    val missingFirmware = remember(firmwareVersion, model) {
+    // Firmware status of every model, so the panel can show which models are
+    // bootable instead of only the selected one. Systems without models fall
+    // back to the single entry keyed by an empty value.
+    val missingByModel = remember(firmwareVersion, models) {
         val systemDir = SessionFiles.systemDir(context)
-        system.firmware.filter { requirement ->
-            val applies = if (system.noGame && model.isNotBlank()) {
-                requirement.file.contains("/$model/")
-            } else {
-                requirement.required
-            }
-            applies && !File(systemDir, requirement.file).exists()
+        fun missing(requirements: List<FirmwareFile>) =
+            requirements.filter { requirement -> !File(systemDir, requirement.file).exists() }
+        if (models.isEmpty()) {
+            mapOf("" to missing(system.firmware.filter { it.required }))
+        } else {
+            models.associate { option -> option.value to missing(option.firmware) }
         }
     }
+    val missingFirmware = missingByModel[model].orEmpty()
 
     // The home screen already names the absolute library root, so the bar only
     // needs the short path — an absolute one gets ellipsized before the folder
@@ -218,17 +235,24 @@ fun GameListScreen(
             }
 
             if (system.noGame) {
-                BootPanel(
-                    system = system,
-                    language = language,
-                    selected = model,
-                    firmwareReady = missingFirmware.isEmpty(),
-                    onSelect = { option, value ->
-                        prefs.setOption(system.core, option.key, value)
-                        model = value
-                    },
-                    onStart = { onPlay(null) },
-                )
+                // Several model rows can exceed a short screen, so the panel
+                // scrolls on its own instead of being clipped.
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    BootPanel(
+                        system = system,
+                        language = language,
+                        models = models,
+                        selected = model,
+                        missingByModel = missingByModel,
+                        onSelect = { value ->
+                            system.bootOptions.firstOrNull()?.key?.let { key ->
+                                prefs.setOption(system.core, key, value)
+                            }
+                            model = value
+                        },
+                        onStart = { onPlay(null) },
+                    )
+                }
             } else {
                 when {
                     scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -282,51 +306,103 @@ fun GameListScreen(
 private fun BootPanel(
     system: SystemInfo,
     language: String,
+    models: List<ModelOption>,
     selected: String,
-    firmwareReady: Boolean,
-    onSelect: (BootOption, String) -> Unit,
+    missingByModel: Map<String, List<FirmwareFile>>,
+    onSelect: (String) -> Unit,
     onStart: () -> Unit,
 ) {
-    val option = system.bootOptions.firstOrNull()
-    var expanded by remember { mutableStateOf(false) }
+    val label = system.bootOptions.firstOrNull()?.label(language).orEmpty()
+    val missing = missingByModel[selected].orEmpty()
     Card(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            option?.let { boot ->
+            if (label.isNotBlank()) {
                 Text(
-                    boot.label(language),
+                    label,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Box {
-                    TextButton(onClick = { expanded = true }) {
-                        Text(selected.ifBlank { boot.values.first() })
-                    }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        boot.values.forEach { value ->
-                            DropdownMenuItem(
-                                text = { Text(value) },
-                                onClick = {
-                                    expanded = false
-                                    onSelect(boot, value)
-                                },
-                            )
-                        }
-                    }
-                }
             }
-            Button(onClick = onStart, enabled = firmwareReady, modifier = Modifier.fillMaxWidth()) {
+            models.forEach { option ->
+                ModelRow(
+                    system = system,
+                    option = option,
+                    selected = option.value == selected,
+                    missing = missingByModel[option.value].orEmpty(),
+                    onSelect = { onSelect(option.value) },
+                )
+            }
+            Button(
+                onClick = onStart,
+                enabled = missing.isEmpty(),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(stringResource(R.string.boot_firmware))
             }
-            if (!firmwareReady) {
+            if (missing.isNotEmpty()) {
                 Text(
                     stringResource(R.string.boot_firmware_waiting),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+/**
+ * One machine model of a firmware-only system. The row is the selector itself:
+ * every model the core supports stays visible with its firmware status, so the
+ * user can see the other models and which dumps still have to be copied.
+ */
+@Composable
+private fun ModelRow(
+    system: SystemInfo,
+    option: ModelOption,
+    selected: Boolean,
+    missing: List<FirmwareFile>,
+    onSelect: () -> Unit,
+) {
+    val ready = missing.isEmpty()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+            )
+            .clickable(onClick = onSelect)
+            .padding(end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Column(Modifier.weight(1f)) {
+            Text(option.label, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "BIOS/${system.id}/${option.folder}",
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                if (ready) {
+                    stringResource(R.string.model_firmware_ready)
+                } else {
+                    stringResource(
+                        R.string.model_firmware_missing,
+                        missing.joinToString(", ") { File(it.file).name },
+                    )
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (ready) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
