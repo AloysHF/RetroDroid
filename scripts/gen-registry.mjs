@@ -44,6 +44,9 @@ function normalize(profile) {
       .map((entry) => ({
         file: entry.file,
         required: entry.required === true,
+        // Only emitted when set, so profiles that mark nothing keep the
+        // registry compact and the flag stays opt-in.
+        ...(entry.optional === true ? { optional: true } : {}),
         hint: hint(entry.hint),
       })),
     input: profile.input?.preset ?? "dpad-ab-select",
