@@ -142,7 +142,7 @@ generate the system registry; nothing else is hard-coded in the app.
   "display_name": { "en": "Native32", "zh": "凌阳 Native32" },
   "short_name": "Native32",
   "manufacturer": "Sunplus",
-  "supported_extensions": ["smf", "sgm", "ssl", "zip"],
+  "supported_extensions": ["smf", "sgm", "zip"],
   "no_game": false,
   "boot_options": [],
   "save_state_format": 1,
