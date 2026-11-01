@@ -14,7 +14,6 @@
       "extensions": [
         "smf",
         "sgm",
-        "ssl",
         "zip"
       ],
       "firmware": [],
@@ -23,8 +22,8 @@
       "noGame": false,
       "bootOptions": [],
       "notes": {
-        "en": "Loads .smf, .sgm and .ssl content, or a .zip game package containing a whole collection.",
-        "zh": "支持 .smf、.sgm、.ssl 内容，或包含整套游戏的 .zip 资源包。"
+        "en": "Loads .smf and .sgm games, or a .zip game package containing a whole collection.",
+        "zh": "支持 .smf、.sgm 游戏，或包含整套游戏的 .zip 资源包。"
       }
     },
     {
