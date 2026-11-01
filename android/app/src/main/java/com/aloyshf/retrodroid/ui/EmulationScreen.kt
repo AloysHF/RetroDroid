@@ -1,6 +1,5 @@
 package com.aloyshf.retrodroid.ui
 
-import android.net.Uri
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -58,7 +57,6 @@ import com.aloyshf.retrodroid.audio.AudioPlayer
 import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
-import com.aloyshf.retrodroid.data.RomScanner
 import com.aloyshf.retrodroid.data.Scaling
 import com.aloyshf.retrodroid.data.SessionFiles
 import com.aloyshf.retrodroid.model.CoreOption
@@ -73,9 +71,8 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-@Suppress("UNUSED_PARAMETER")
 @Composable
-fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: () -> Unit) {
+fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val audio = remember { AudioPlayer() }
@@ -95,7 +92,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
     var surface by remember { mutableStateOf<android.view.Surface?>(null) }
     var started by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var cacheDir by remember { mutableStateOf<File?>(null) }
     var stateExists by remember { mutableStateOf(false) }
 
     val loadFailedMessage = stringResource(R.string.load_failed)
@@ -104,27 +100,29 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
     val saveFailedMessage = stringResource(R.string.state_save_failed)
     val loadStateFailedMessage = stringResource(R.string.state_load_failed)
     val noStateMessage = stringResource(R.string.no_state)
-    val stateFile = remember(game.uri) {
-        SessionFiles.stateFile(context, system.core, game.name, game.uri)
+    val stateFile = remember(game?.uri) {
+        SessionFiles.stateFile(
+            context,
+            system.core,
+            game?.name ?: "firmware",
+            game?.uri ?: android.net.Uri.EMPTY,
+        )
     }
 
     LaunchedEffect(Unit) {
-        var prepared: File? = null
         val result = withContext(Dispatchers.IO) {
             runCatching {
-                val content = SessionFiles.prepareContent(
-                    context,
-                    game.uri,
-                    game.name,
-                    RomScanner.siblings(context, treeUri, game.uri),
-                )
-                prepared = content.cacheDir
+                // Library games are plain files, so the core opens them in place.
+                // Firmware-only systems boot with no content path.
+                val contentPath = game?.let {
+                    File(requireNotNull(it.uri.path) { "missing game path" }).absolutePath
+                }
                 val corePath = File(context.applicationInfo.nativeLibraryDir, system.soName).absolutePath
-                val systemDir = SessionFiles.systemDir(context, system.core)
+                val systemDir = SessionFiles.systemDir(context)
                 val saveDir = SessionFiles.saveDir(context, system.core)
                 val ok = NativeCore.nativeLoadCore(
                     corePath,
-                    content.file.absolutePath,
+                    contentPath,
                     systemDir.absolutePath,
                     saveDir.absolutePath,
                     prefs.optionsJson(system.core),
@@ -133,7 +131,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
                 NativeCore.nativeAvInfo()
             }
         }
-        cacheDir = prepared
         result.onSuccess { info ->
             video = info
             loaded = true
@@ -186,7 +183,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
             NativeCore.nativeStop()
             audio.stop()
             NativeCore.nativeUnload()
-            cacheDir?.let { SessionFiles.cleanupCache(it) }
         }
     }
 
@@ -337,7 +333,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    game.name,
+                    game?.name ?: stringResource(R.string.boot_firmware),
                     color = Color.White.copy(alpha = 0.75f),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,

@@ -12,10 +12,15 @@ without per-app patches.
 
 ### 1.1 Content and paths
 
-- `retro_get_system_info()` must report `need_fullpath = true`. RetroDroid hands
-  the core a real file path, never a memory buffer.
+- A core that loads game content must report `need_fullpath = true`. RetroDroid
+  hands the core a real file path, never a memory buffer.
+- A firmware-only system (no game media, for example WQX) sets
+  `need_fullpath = false` and `no_game = true` in its profile. RetroDroid calls
+  `retro_load_game(NULL)` and the core boots its firmware from the system
+  directory. Such a core must not reject a null `retro_game_info`.
 - `valid_extensions` must be a `|`-separated list of lowercase extensions
   without dots. RetroDroid uses it to decide which system a game belongs to.
+  A firmware-only system leaves it empty.
 - A game may consist of a directory tree (for example a package with a menu
   file and several data files). RetroDroid copies the user's selection out of
   SAF into an app-private cache directory before loading, so the core may use
@@ -33,9 +38,14 @@ without per-app patches.
   directory per system. Never write saves next to the content: that location
   can be a temporary cache copy that is deleted on exit.
 - Firmware/BIOS files must be looked up in the path returned by
-  `RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY`. RetroDroid returns a persistent
-  per-system directory that the user populates through the firmware import
-  screen.
+  `RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY`. RetroDroid returns one shared,
+  persistent system root for every core. A core must therefore use its own
+  fixed subfolder and exact file names: `bbkemu/a4980/8.BIN`,
+  `wqxemu/<model>/<model>.rom`, `hyperscanemu/spg290.bin`. Names are
+  case-sensitive; there is no search across sibling folders and no
+  content-based discovery.
+- The same relative layout is used by the standalone emulator, RetroArch,
+  EmulatorJS and RetroDroid, so one firmware tree serves every frontend.
 - Any other user-visible asset (keyboard art, fonts) also belongs in the system
   directory; it must never be read from the APK assets or the current working
   directory.
@@ -133,6 +143,8 @@ generate the system registry; nothing else is hard-coded in the app.
   "short_name": "Native32",
   "manufacturer": "Sunplus",
   "supported_extensions": ["smf", "sgm", "ssl", "zip"],
+  "no_game": false,
+  "boot_options": [],
   "save_state_format": 1,
   "firmware": [],
   "input": { "preset": "dpad-ab-select" },
@@ -150,9 +162,11 @@ generate the system registry; nothing else is hard-coded in the app.
 | `so_name` | File name installed into `jniLibs/<abi>/`. |
 | `system` | System id shown in the app. Usually equals `core`. |
 | `display_name` | Bilingual names. |
-| `supported_extensions` | Superset of the core's `valid_extensions`; used for ROM discovery only. |
+| `supported_extensions` | Superset of the core's `valid_extensions`; used for ROM discovery only. Empty for firmware-only systems. |
+| `no_game` | `true` when the core boots without content (`retro_load_game(NULL)`); RetroDroid then shows a model selector and a **Start firmware** button instead of a game list. |
+| `boot_options` | Model choices shown before boot: `[{ "key": "wqxemu_model", "label": { "en": "...", "zh": "..." }, "values": ["nc1020", "..."] }]`. The first value is the default; the selection is stored as the core option `key`. |
 | `save_state_format` | Version written into save-state envelopes; must match the core. |
-| `firmware` | Files the core needs in the system directory: `[{ "file": "BIOS.BIN", "required": true, "hint": { "en": "...", "zh": "..." } }]`. |
+| `firmware` | Files the core reads from the system directory, relative to the shared system root: `[{ "file": "wqxemu/nc1020/obj_lu.bin", "required": true, "hint": { "en": "...", "zh": "..." } }]`. RetroDroid shows the same path below `BIOS/<system>/` with the leading core folder hidden. `required: false` marks an optional support file (for example `coolbaremu/coolbaremu_orientation.csv`): it is copied when present and never blocks loading. |
 | `input.preset` | Frontend layout id: `dpad-ab-select`, `dpad-abcd-select`, `dpad-ab-lr-select`, `qwerty`. |
 | `video.orientation` | Preferred emulation orientation: `landscape` or `portrait`. |
 

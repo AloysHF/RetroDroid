@@ -33,7 +33,7 @@ landed incrementally; see `git log` for the current state.
 ```
 ┌──────────────────────────────────────────────┐
 │ Kotlin / Jetpack Compose UI                  │
-│  system list · ROM browser (SAF) · settings  │
+│  system list · fixed on-device library       │
 ├──────────────────────────────────────────────┤
 │ JNI  (com.aloyshf.retrodroid.core.NativeCore)│
 ├──────────────────────────────────────────────┤
@@ -58,18 +58,54 @@ The interface every core must satisfy is documented in
 
 ## Using the app
 
-1. On the home screen pick the folder that holds the ROMs of a system
-   (`SAF` - Downloads, an SD card or a USB drive). The choice is remembered.
-2. Systems that need firmware show a banner on their game list. Import the
-   files from there; a picked file is matched against the names in the core
-   profile, so files land in the folders the core looks in (some systems keep
-   one folder per model).
-3. Select a game to start it. The pause menu offers save states, core options,
-   scaling and screen rotation; the back gesture returns to the game list.
+RetroDroid reads games and firmware from one fixed folder on the device, so
+there is nothing to pick on every launch:
 
-For disc-based systems select the `.cue` sheet: the tracks it references are
-copied next to it automatically, so a folder holding several discs only
-transfers the one being played.
+```
+/sdcard/RetroDroid/
+├── ROMs/
+│   ├── native32/
+│   ├── coolbar/
+│   ├── dingoo/
+│   ├── hyperscan/
+│   ├── lavax/
+│   ├── playdia/
+│   ├── spmp8000/
+│   ├── wqx/
+│   └── bbk/
+└── BIOS/
+    ├── bbk/
+    │   ├── a4980/          8.BIN, E.BIN
+    │   └── a4988/          8.BIN, E.BIN (optional model)
+    ├── coolbar/            coolbaremu_orientation.csv (optional)
+    ├── hyperscan/          spg290.bin, hyperscan.bin
+    └── wqx/
+        ├── nc1020/         obj_lu.bin, nc1020.fls
+        ├── pc1000/         pc1000.rom, pc1000.nor
+        ├── cc800/          obj.bin, cc800.fls
+        ├── nc2000/         nc2000.nor, nc2000.nand, nc2000.nand0
+        └── nc3000/         nc3000.nor, nc3000.nand, nc3000.nand0
+```
+
+1. On first launch, grant `All files access` so the app can read the library.
+   The folder tree is created automatically; drop game files into the
+   subfolder of their system.
+2. Firmware and support files live in `BIOS/<system>/`, with one subfolder per
+   model on systems whose core loads model-specific files (BBK a4980/a4988, the
+   WQX models). Coolbar's optional orientation profile goes directly in
+   `BIOS/coolbar/`. File and folder names are case-sensitive. The game list
+   shows the exact paths a system still needs; matching files are copied into
+   the shared private system root on refresh, where every core reads
+   `<system>/<core>/…` (for example `bbkemu/a4980/8.BIN`). Only systems with
+   support files get a `BIOS/<system>/` folder.
+3. Select a game to start it. WQX has no game content: pick the machine model
+   and press **Start firmware**. The pause menu offers save states, core
+   options, scaling and screen rotation; the back gesture returns to the game
+   list.
+
+Games are opened in place from the library. For disc-based systems keep the
+`.cue` sheet next to its tracks (`ROMs/playdia/game.cue` and
+`ROMs/playdia/game.bin`).
 
 ## Building
 

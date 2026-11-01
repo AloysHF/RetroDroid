@@ -48,6 +48,12 @@ function normalize(profile) {
       })),
     input: profile.input?.preset ?? "dpad-ab-select",
     orientation: profile.video?.orientation ?? "landscape",
+    noGame: profile.no_game === true,
+    bootOptions: (profile.boot_options ?? []).map((option) => ({
+      key: option.key,
+      label: hint(option.label),
+      values: option.values ?? [],
+    })),
     notes: hint(profile.notes),
   };
 }

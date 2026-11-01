@@ -1,7 +1,5 @@
 package com.aloyshf.retrodroid.ui
 
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,6 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -39,63 +39,66 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.aloyshf.retrodroid.R
+import com.aloyshf.retrodroid.data.Library
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
-import com.aloyshf.retrodroid.data.RomScanner
 import com.aloyshf.retrodroid.data.SessionFiles
+import com.aloyshf.retrodroid.model.BootOption
 import com.aloyshf.retrodroid.model.SystemInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Uri) -> Unit) {
+fun GameListScreen(
+    system: SystemInfo,
+    onBack: () -> Unit,
+    onPlay: (RomEntry?) -> Unit,
+) {
     val context = LocalContext.current
-    val prefs = remember { Prefs(context) }
     val language = Locale.getDefault().language
     val importedMessage = stringResource(R.string.firmware_imported)
     val failedMessage = stringResource(R.string.firmware_failed)
+    val prefs = remember { Prefs(context) }
 
-    var folder by remember { mutableStateOf(prefs.treeUri(system.id)?.let(Uri::parse)) }
+    var hasAccess by remember { mutableStateOf(Library.hasAccess(context)) }
     var games by remember { mutableStateOf<List<RomEntry>>(emptyList()) }
-    var scanning by remember { mutableStateOf(false) }
+    var scanning by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
     var firmwareVersion by remember { mutableIntStateOf(0) }
+    var model by remember(system.id) {
+        mutableStateOf(system.defaultBootValue(prefs))
+    }
 
-    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        runCatching {
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION,
-            )
-        }
-        prefs.setTreeUri(system.id, uri.toString())
-        folder = uri
+    OnResume {
+        hasAccess = Library.hasAccess(context)
         refreshKey++
     }
 
     val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNullOrEmpty()) return@rememberLauncherForActivityResult
-        val target = SessionFiles.systemDir(context, system.core)
-        val expectedByName = system.firmware.groupBy { File(it.file).name.lowercase() }
+        val target = SessionFiles.systemDir(context)
+        val expectedByName = system.firmware.groupBy { File(it.file).name }
         var copied = 0
         for (uri in uris) {
             val name = (DocumentFile.fromSingleUri(context, uri)?.name ?: uri.lastPathSegment)?.takeIf { it.isNotBlank() } ?: continue
             val fileName = File(name).name
-            // Firmware profiles may name a path below the system directory
-            // (WQX keeps one folder per model); match the picked file against
-            // those names and create the folders it needs.
-            val destinations = expectedByName[fileName.lowercase()]?.map { it.file } ?: listOf(fileName)
+            // Firmware names are case-sensitive; one basename may exist for
+            // several model folders (BBK A4980/A4988), so copy to each match.
+            val destinations = expectedByName[fileName] ?: continue
             val ok = runCatching {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("unreadable")
-                destinations.forEach { relative ->
-                    val out = File(target, relative)
+                destinations.forEach { requirement ->
+                    val out = File(target, requirement.file)
                     out.parentFile?.mkdirs()
                     out.writeBytes(bytes)
                 }
@@ -106,18 +109,35 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
         Toast.makeText(context, if (copied > 0) importedMessage else failedMessage, Toast.LENGTH_SHORT).show()
     }
 
-    LaunchedEffect(folder, refreshKey) {
-        val current = folder ?: return@LaunchedEffect
+    LaunchedEffect(refreshKey) {
         scanning = true
-        games = RomScanner.scan(context, current, system.extensions.toSet())
+        games = withContext(Dispatchers.IO) {
+            val access = Library.hasAccess(context)
+            if (access) {
+                Library.syncFirmware(context, system)
+                if (system.noGame) emptyList() else Library.scanGames(system.id, system.extensions)
+            } else {
+                emptyList()
+            }
+        }
+        hasAccess = Library.hasAccess(context)
         scanning = false
+        firmwareVersion++
     }
 
-    val missingFirmware = remember(firmwareVersion) {
+    val missingFirmware = remember(firmwareVersion, model) {
+        val systemDir = SessionFiles.systemDir(context)
         system.firmware.filter { requirement ->
-            requirement.required && !File(SessionFiles.systemDir(context, system.core), requirement.file).exists()
+            val applies = if (system.noGame && model.isNotBlank()) {
+                requirement.file.contains("/$model/")
+            } else {
+                requirement.required
+            }
+            applies && !File(systemDir, requirement.file).exists()
         }
     }
+
+    val folderPath = Library.romDir(system.id).absolutePath
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -132,8 +152,9 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            stringResource(R.string.system_extensions, system.extensions.joinToString(", ")),
+                            folderPath,
                             style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -146,13 +167,8 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
                     }
                 },
                 actions = {
-                    TextButton(onClick = { folderPicker.launch(null) }) {
-                        Text(stringResource(if (folder == null) R.string.choose_folder else R.string.change_folder))
-                    }
-                    if (folder != null) {
-                        TextButton(onClick = { refreshKey++ }) {
-                            Text(stringResource(R.string.refresh))
-                        }
+                    TextButton(onClick = { refreshKey++ }) {
+                        Text(stringResource(R.string.refresh))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -162,52 +178,64 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (system.firmware.isNotEmpty()) {
+            if (system.firmware.any { it.required } || missingFirmware.isNotEmpty()) {
                 FirmwareBanner(
-                    names = missingFirmware.map { it.file },
+                    names = missingFirmware.map { Library.biosRelativePath(system, it.file) },
                     hints = missingFirmware.map { it.hint(language) }.filter { it.isNotBlank() },
                     ready = missingFirmware.isEmpty(),
+                    folderHint = stringResource(R.string.bios_hint, Library.biosDir(system.id).absolutePath),
                     onImport = { firmwarePicker.launch(arrayOf("*/*")) },
                 )
             }
 
-            val currentFolder = folder
-            when {
-                currentFolder == null -> EmptyState(
-                    text = stringResource(R.string.no_folder),
-                    action = stringResource(R.string.choose_folder),
-                    onAction = { folderPicker.launch(null) },
+            if (system.noGame) {
+                BootPanel(
+                    system = system,
+                    language = language,
+                    selected = model,
+                    firmwareReady = missingFirmware.isEmpty(),
+                    onSelect = { option, value ->
+                        prefs.setOption(system.core, option.key, value)
+                        model = value
+                    },
+                    onStart = { onPlay(null) },
                 )
-
-                scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(12.dp))
-                        Text(stringResource(R.string.scanning), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                when {
+                    scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(12.dp))
+                            Text(stringResource(R.string.scanning), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                }
 
-                games.isEmpty() -> EmptyState(
-                    text = stringResource(R.string.no_games),
-                    action = stringResource(R.string.refresh),
-                    onAction = { refreshKey++ },
-                )
+                    games.isEmpty() -> EmptyState(
+                        text = if (!hasAccess) {
+                            stringResource(R.string.library_denied, Library.root().absolutePath)
+                        } else {
+                            stringResource(R.string.roms_hint, Library.romDir(system.id).absolutePath)
+                        },
+                        action = stringResource(R.string.refresh),
+                        onAction = { refreshKey++ },
+                    )
 
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    item {
-                        Text(
-                            stringResource(R.string.game_count, games.size),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 4.dp),
-                        )
-                    }
-                    items(games, key = { it.uri.toString() }) { entry ->
-                        GameRow(entry) { onPlay(entry, currentFolder) }
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item {
+                            Text(
+                                pluralStringResource(R.plurals.game_count, games.size, games.size),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                            )
+                        }
+                        items(games, key = { it.uri.toString() }) { entry ->
+                            GameRow(entry) { onPlay(entry) }
+                        }
                     }
                 }
             }
@@ -216,7 +244,71 @@ fun GameListScreen(system: SystemInfo, onBack: () -> Unit, onPlay: (RomEntry, Ur
 }
 
 @Composable
-private fun FirmwareBanner(names: List<String>, hints: List<String>, ready: Boolean, onImport: () -> Unit) {
+private fun BootPanel(
+    system: SystemInfo,
+    language: String,
+    selected: String,
+    firmwareReady: Boolean,
+    onSelect: (BootOption, String) -> Unit,
+    onStart: () -> Unit,
+) {
+    val option = system.bootOptions.firstOrNull()
+    var expanded by remember { mutableStateOf(false) }
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            option?.let { boot ->
+                Text(
+                    boot.label(language),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Box {
+                    TextButton(onClick = { expanded = true }) {
+                        Text(selected.ifBlank { boot.values.first() })
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        boot.values.forEach { value ->
+                            DropdownMenuItem(
+                                text = { Text(value) },
+                                onClick = {
+                                    expanded = false
+                                    onSelect(boot, value)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            Button(onClick = onStart, enabled = firmwareReady, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.boot_firmware))
+            }
+            if (!firmwareReady) {
+                Text(
+                    stringResource(R.string.boot_firmware_waiting),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+private fun SystemInfo.defaultBootValue(prefs: Prefs): String {
+    val option = bootOptions.firstOrNull() ?: return ""
+    return prefs.option(core, option.key, option.values.first())
+}
+
+@Composable
+private fun FirmwareBanner(
+    names: List<String>,
+    hints: List<String>,
+    ready: Boolean,
+    folderHint: String,
+    onImport: () -> Unit,
+) {
     val colors = if (ready) {
         CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     } else {
@@ -235,8 +327,16 @@ private fun FirmwareBanner(names: List<String>, hints: List<String>, ready: Bool
             hints.forEach { hint ->
                 Text(hint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            TextButton(onClick = onImport, contentPadding = PaddingValues(0.dp)) {
-                Text(stringResource(R.string.import_firmware))
+            if (!ready) {
+                Text(
+                    folderHint,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = onImport, contentPadding = PaddingValues(0.dp)) {
+                    Text(stringResource(R.string.import_firmware))
+                }
             }
         }
     }

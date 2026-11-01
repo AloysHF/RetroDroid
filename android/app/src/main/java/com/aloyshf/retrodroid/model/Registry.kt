@@ -14,6 +14,16 @@ data class FirmwareFile(
         if (language.startsWith("zh")) hintZh.ifBlank { hintEn } else hintEn
 }
 
+data class BootOption(
+    val key: String,
+    val labelEn: String,
+    val labelZh: String,
+    val values: List<String>,
+) {
+    fun label(language: String): String =
+        if (language.startsWith("zh")) labelZh.ifBlank { labelEn } else labelEn
+}
+
 data class SystemInfo(
     val id: String,
     val core: String,
@@ -26,6 +36,8 @@ data class SystemInfo(
     val firmware: List<FirmwareFile>,
     val input: String,
     val orientation: String,
+    val noGame: Boolean,
+    val bootOptions: List<BootOption>,
     val notesEn: String,
     val notesZh: String,
 ) {
@@ -77,6 +89,26 @@ object Registry {
                 )
             }
         }
+        val bootOptions = mutableListOf<BootOption>()
+        item.optJSONArray("bootOptions")?.let { array ->
+            for (index in 0 until array.length()) {
+                val entry = array.optJSONObject(index) ?: continue
+                val label = entry.optJSONObject("label")
+                val values = mutableListOf<String>()
+                entry.optJSONArray("values")?.let { choices ->
+                    for (choice in 0 until choices.length()) {
+                        values += choices.optString(choice)
+                    }
+                }
+                if (values.isEmpty()) continue
+                bootOptions += BootOption(
+                    key = entry.optString("key"),
+                    labelEn = label?.optString("en").orEmpty(),
+                    labelZh = label?.optString("zh").orEmpty(),
+                    values = values,
+                )
+            }
+        }
         val names = item.optJSONObject("names")
         val notes = item.optJSONObject("notes")
         return SystemInfo(
@@ -91,6 +123,8 @@ object Registry {
             firmware = firmware,
             input = item.optString("input", "dpad-ab-select"),
             orientation = item.optString("orientation", "landscape"),
+            noGame = item.optBoolean("noGame", false),
+            bootOptions = bootOptions,
             notesEn = notes?.optString("en").orEmpty(),
             notesZh = notes?.optString("zh").orEmpty(),
         )

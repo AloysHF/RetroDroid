@@ -89,13 +89,17 @@ pub extern "system" fn Java_com_aloyshf_retrodroid_core_NativeCore_nativeLoadCor
 ) -> jboolean {
     guard(JNI_FALSE, || {
         let core_path = read_string(&mut env, &core_path)?;
-        let content_path = read_string(&mut env, &content_path)?;
+        let content_path = if content_path.is_null() {
+            None
+        } else {
+            Some(read_string(&mut env, &content_path)?)
+        };
         let system_dir = read_string(&mut env, &system_dir)?;
         let save_dir = read_string(&mut env, &save_dir)?;
         let options_json = read_string(&mut env, &options_json)?;
         session::load(
             &core_path,
-            &content_path,
+            content_path.as_deref(),
             &system_dir,
             &save_dir,
             &options_json,

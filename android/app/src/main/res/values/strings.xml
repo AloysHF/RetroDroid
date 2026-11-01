@@ -10,18 +10,40 @@
     <string name="refresh">Refresh</string>
     <string name="no_folder">No game folder selected. Pick the folder that contains your ROMs.</string>
     <string name="no_games">No games found in this folder.</string>
-    <string name="game_count">%1$d games</string>
+    <plurals name="game_count">
+        <item quantity="one">%1$d game</item>
+        <item quantity="other">%1$d games</item>
+    </plurals>
     <string name="scanning">Scanning…</string>
     <string name="system_extensions">Supported files: %1$s</string>
     <string name="games_title">%1$s games</string>
 
+    <string name="library_title">Game library</string>
+    <string name="library_grant">Grant file access</string>
+    <string name="library_skip">Skip and choose folders</string>
+    <string name="library_denied">Reading %1$s requires the All files access permission.</string>
+    <string name="library_root">Library: %1$s</string>
+    <string name="library_roms">Games: %1$s</string>
+    <string name="library_bios">Firmware: %1$s</string>
+    <string name="library_folders">One subfolder per system: %1$s</string>
+    <string name="library_authorized">Authorized. Games and firmware are scanned automatically.</string>
+    <string name="roms_hint">Copy games into %1$s, then refresh.</string>
+    <string name="bios_hint">Put the firmware files listed above into %1$s, keeping the subfolders shown.</string>
+    <plurals name="folder_and_count">
+        <item quantity="one">%1$s · %2$d game</item>
+        <item quantity="other">%1$s · %2$d games</item>
+    </plurals>
+
     <string name="firmware_title">Firmware</string>
     <string name="firmware_missing">Required firmware is missing: %1$s</string>
+    <string name="firmware_not_ready">Required firmware missing · see the BIOS folder</string>
     <string name="firmware_ready">Firmware is ready.</string>
     <string name="import_firmware">Import firmware</string>
     <string name="firmware_pick">Select the firmware files to import</string>
     <string name="firmware_imported">Firmware imported.</string>
     <string name="firmware_failed">Could not import firmware.</string>
+    <string name="boot_firmware">Start firmware</string>
+    <string name="boot_firmware_waiting">Import the firmware files above before starting.</string>
 
     <string name="loading">Loading…</string>
     <string name="load_failed">Could not start the game.</string>

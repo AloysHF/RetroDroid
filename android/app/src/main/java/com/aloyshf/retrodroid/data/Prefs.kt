@@ -7,16 +7,11 @@ import org.json.JSONObject
 class Prefs(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("retrodroid", Context.MODE_PRIVATE)
 
-    fun treeUri(systemId: String): String? = prefs.getString("tree_$systemId", null)
-
-    fun setTreeUri(systemId: String, uri: String?) {
-        prefs.edit().apply {
-            if (uri == null) remove("tree_$systemId") else putString("tree_$systemId", uri)
-        }.apply()
-    }
-
     fun optionsJson(core: String): String =
         prefs.getString("options_$core", null) ?: "{}"
+
+    fun option(core: String, key: String, default: String): String =
+        runCatching { JSONObject(optionsJson(core)).optString(key, default) }.getOrDefault(default)
 
     fun setOption(core: String, key: String, value: String) {
         val current = runCatching { JSONObject(optionsJson(core)) }.getOrElse { JSONObject() }
