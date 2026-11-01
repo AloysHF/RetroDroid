@@ -1,6 +1,5 @@
 package com.aloyshf.retrodroid.ui
 
-import android.net.Uri
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -58,7 +57,6 @@ import com.aloyshf.retrodroid.audio.AudioPlayer
 import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
-import com.aloyshf.retrodroid.data.RomScanner
 import com.aloyshf.retrodroid.data.Scaling
 import com.aloyshf.retrodroid.data.SessionFiles
 import com.aloyshf.retrodroid.model.CoreOption
@@ -73,9 +71,8 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-@Suppress("UNUSED_PARAMETER")
 @Composable
-fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: () -> Unit) {
+fun EmulationScreen(system: SystemInfo, game: RomEntry, onExit: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val audio = remember { AudioPlayer() }
@@ -95,7 +92,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
     var surface by remember { mutableStateOf<android.view.Surface?>(null) }
     var started by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var cacheDir by remember { mutableStateOf<File?>(null) }
     var stateExists by remember { mutableStateOf(false) }
 
     val loadFailedMessage = stringResource(R.string.load_failed)
@@ -109,22 +105,16 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
     }
 
     LaunchedEffect(Unit) {
-        var prepared: File? = null
         val result = withContext(Dispatchers.IO) {
             runCatching {
-                val content = SessionFiles.prepareContent(
-                    context,
-                    game.uri,
-                    game.name,
-                    RomScanner.siblings(context, treeUri, game.uri),
-                )
-                prepared = content.cacheDir
+                // Library games are plain files, so the core opens them in place.
+                val contentFile = File(requireNotNull(game.uri.path) { "missing game path" })
                 val corePath = File(context.applicationInfo.nativeLibraryDir, system.soName).absolutePath
                 val systemDir = SessionFiles.systemDir(context, system.core)
                 val saveDir = SessionFiles.saveDir(context, system.core)
                 val ok = NativeCore.nativeLoadCore(
                     corePath,
-                    content.file.absolutePath,
+                    contentFile.absolutePath,
                     systemDir.absolutePath,
                     saveDir.absolutePath,
                     prefs.optionsJson(system.core),
@@ -133,7 +123,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
                 NativeCore.nativeAvInfo()
             }
         }
-        cacheDir = prepared
         result.onSuccess { info ->
             video = info
             loaded = true
@@ -186,7 +175,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, treeUri: Uri, onExit: ()
             NativeCore.nativeStop()
             audio.stop()
             NativeCore.nativeUnload()
-            cacheDir?.let { SessionFiles.cleanupCache(it) }
         }
     }
 

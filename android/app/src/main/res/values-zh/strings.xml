@@ -10,13 +10,33 @@
     <string name="refresh">刷新</string>
     <string name="no_folder">尚未选择游戏目录，请选择存放 ROM 的文件夹。</string>
     <string name="no_games">此目录中没有找到游戏。</string>
-    <string name="game_count">%1$d 个游戏</string>
+    <plurals name="game_count">
+        <item quantity="one">%1$d 个游戏</item>
+        <item quantity="other">%1$d 个游戏</item>
+    </plurals>
     <string name="scanning">扫描中…</string>
     <string name="system_extensions">支持的文件：%1$s</string>
     <string name="games_title">%1$s 游戏</string>
 
+    <string name="library_title">游戏库</string>
+    <string name="library_grant">授予文件访问权限</string>
+    <string name="library_skip">跳过，使用文件夹选择</string>
+    <string name="library_denied">需要「所有文件访问」权限才能读取 %1$s。</string>
+    <string name="library_root">游戏库：%1$s</string>
+    <string name="library_roms">游戏目录：%1$s</string>
+    <string name="library_bios">固件目录：%1$s</string>
+    <string name="library_folders">每个系统一个子目录：%1$s</string>
+    <string name="library_authorized">已授权，游戏与固件会自动扫描。</string>
+    <string name="roms_hint">把游戏复制到 %1$s 后点刷新。</string>
+    <string name="bios_hint">把上面列出的固件按子目录放到 %1$s。</string>
+    <plurals name="folder_and_count">
+        <item quantity="one">%1$s · %2$d 个游戏</item>
+        <item quantity="other">%1$s · %2$d 个游戏</item>
+    </plurals>
+
     <string name="firmware_title">固件</string>
     <string name="firmware_missing">缺少必需固件：%1$s</string>
+    <string name="firmware_not_ready">缺少必需固件 · 见 BIOS 目录</string>
     <string name="firmware_ready">固件已就绪。</string>
     <string name="import_firmware">导入固件</string>
     <string name="firmware_pick">选择要导入的固件文件</string>

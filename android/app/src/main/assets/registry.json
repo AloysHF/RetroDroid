@@ -315,7 +315,7 @@
       ],
       "firmware": [
         {
-          "file": "8.BIN",
+          "file": "BBKEmu/A4980/8.BIN",
           "required": true,
           "hint": {
             "en": "Font ROM from a BBK A4980 device. Keep the original name 8.BIN.",
@@ -323,7 +323,7 @@
           }
         },
         {
-          "file": "E.BIN",
+          "file": "BBKEmu/A4980/E.BIN",
           "required": true,
           "hint": {
             "en": "OS ROM from a BBK A4980 device. Keep the original name E.BIN.",
