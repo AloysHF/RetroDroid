@@ -68,32 +68,40 @@ object Library {
                 PackageManager.PERMISSION_GRANTED
         }
 
+    /**
+     * Every supported game below ROMs/<system>/, tagged with the folder that
+     * holds it so the game list can walk the tree instead of showing one flat
+     * pile of files.
+     */
     fun scanGames(systemId: String, extensions: List<String>): List<RomEntry> {
         val supported = extensions.map { it.lowercase(Locale.ROOT) }.toSet()
         val start = romDir(systemId)
         if (!start.isDirectory) return emptyList()
 
         val results = mutableListOf<RomEntry>()
-        val queue = ArrayDeque<Pair<File, Int>>()
-        queue.addLast(start to 0)
+        val queue = ArrayDeque<Pending>()
+        queue.addLast(Pending(start, 0, ""))
         while (queue.isNotEmpty() && results.size < MAX_GAMES) {
-            val (dir, depth) = queue.removeFirst()
+            val (dir, depth, relative) = queue.removeFirst()
             val children = dir.listFiles() ?: continue
             for (child in children) {
                 val name = child.name
                 if (name.startsWith('.')) continue
+                val folder = if (relative.isEmpty()) name else "$relative/$name"
                 if (child.isDirectory) {
-                    if (depth < MAX_DEPTH) queue.addLast(child to depth + 1)
+                    if (depth < MAX_DEPTH) queue.addLast(Pending(child, depth + 1, folder))
                     continue
                 }
                 val extension = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
                 if (extension in supported) {
-                    results += RomEntry(Uri.fromFile(child), name, child.length())
+                    results += RomEntry(Uri.fromFile(child), name, child.length(), relative)
                 }
             }
         }
         return results.sortedBy { it.name.lowercase(Locale.ROOT) }
     }
+
+    private data class Pending(val dir: File, val depth: Int, val relative: String)
 
     fun countGames(systemId: String, extensions: List<String>): Int = scanGames(systemId, extensions).size
 

@@ -59,8 +59,11 @@ class MainActivity : ComponentActivity() {
 
 sealed interface Screen {
     data object Home : Screen
-    data class Games(val system: SystemInfo) : Screen
-    data class Play(val system: SystemInfo, val game: RomEntry?) : Screen
+
+    /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
+    data class Games(val system: SystemInfo, val folder: String = "") : Screen
+
+    data class Play(val system: SystemInfo, val game: RomEntry?, val folder: String = "") : Screen
 }
 
 @Composable
@@ -115,14 +118,16 @@ private fun App() {
 
         is Screen.Games -> GameListScreen(
             system = current.system,
+            folder = current.folder,
+            onFolder = { folder -> screen = current.copy(folder = folder) },
             onBack = { screen = Screen.Home },
-            onPlay = { game -> screen = Screen.Play(current.system, game) },
+            onPlay = { game -> screen = Screen.Play(current.system, game, current.folder) },
         )
 
         is Screen.Play -> EmulationScreen(
             system = current.system,
             game = current.game,
-            onExit = { screen = Screen.Games(current.system) },
+            onExit = { screen = Screen.Games(current.system, current.folder) },
         )
     }
 }

@@ -103,9 +103,11 @@ there is nothing to pick on every launch:
    options, scaling and screen rotation; the back gesture returns to the game
    list.
 
-Games are opened in place from the library. For disc-based systems keep the
-`.cue` sheet next to its tracks (`ROMs/playdia/game.cue` and
-`ROMs/playdia/game.bin`).
+Games are opened in place from the library. Folders below `ROMs/<system>/` are
+listed before the games of the current folder and open one level at a time, so
+a large library stays browsable; the back arrow and the back gesture step out
+of a folder one level. For disc-based systems keep the `.cue` sheet next to its
+tracks (`ROMs/playdia/game.cue` and `ROMs/playdia/game.bin`).
 
 ## Building
 
