@@ -9,6 +9,8 @@ data class FirmwareFile(
     val required: Boolean,
     val hintEn: String,
     val hintZh: String,
+    /** The core uses this file when it is there but boots without it. */
+    val optional: Boolean = false,
 ) {
     fun hint(language: String): String =
         if (language.startsWith("zh")) hintZh.ifBlank { hintEn } else hintEn
@@ -124,6 +126,7 @@ object Registry {
                     required = entry.optBoolean("required", false),
                     hintEn = hint?.optString("en").orEmpty(),
                     hintZh = hint?.optString("zh").orEmpty(),
+                    optional = entry.optBoolean("optional", false),
                 )
             }
         }

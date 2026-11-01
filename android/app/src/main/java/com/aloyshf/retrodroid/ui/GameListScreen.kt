@@ -160,15 +160,20 @@ fun GameListScreen(
     // back to the single entry keyed by an empty value.
     val missingByModel = remember(firmwareVersion, models) {
         val systemDir = SessionFiles.systemDir(context)
-        fun missing(requirements: List<FirmwareFile>) =
-            requirements.filter { requirement -> !File(systemDir, requirement.file).exists() }
+        fun state(requirements: List<FirmwareFile>): ModelFirmwareState {
+            val absent = requirements.filter { requirement -> !File(systemDir, requirement.file).exists() }
+            return ModelFirmwareState(
+                missingRequired = absent.filterNot { it.optional },
+                missingOptional = absent.filter { it.optional },
+            )
+        }
         if (models.isEmpty()) {
-            mapOf("" to missing(system.firmware.filter { it.required }))
+            mapOf("" to state(system.firmware.filter { it.required }))
         } else {
-            models.associate { option -> option.value to missing(option.firmware) }
+            models.associate { option -> option.value to state(option.firmware) }
         }
     }
-    val missingFirmware = missingByModel[model].orEmpty()
+    val missingFirmware = missingByModel[model]?.missingRequired.orEmpty()
 
     // The home screen already names the absolute library root, so the bar only
     // needs the short path — an absolute one gets ellipsized before the folder
@@ -302,18 +307,26 @@ fun GameListScreen(
     }
 }
 
+/** Missing dumps of one model, split by whether the core needs them to boot. */
+private data class ModelFirmwareState(
+    val missingRequired: List<FirmwareFile> = emptyList(),
+    val missingOptional: List<FirmwareFile> = emptyList(),
+) {
+    val ready: Boolean get() = missingRequired.isEmpty()
+}
+
 @Composable
 private fun BootPanel(
     system: SystemInfo,
     language: String,
     models: List<ModelOption>,
     selected: String,
-    missingByModel: Map<String, List<FirmwareFile>>,
+    missingByModel: Map<String, ModelFirmwareState>,
     onSelect: (String) -> Unit,
     onStart: () -> Unit,
 ) {
     val label = system.bootOptions.firstOrNull()?.label(language).orEmpty()
-    val missing = missingByModel[selected].orEmpty()
+    val missing = missingByModel[selected] ?: ModelFirmwareState()
     Card(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -331,18 +344,18 @@ private fun BootPanel(
                     system = system,
                     option = option,
                     selected = option.value == selected,
-                    missing = missingByModel[option.value].orEmpty(),
+                    state = missingByModel[option.value] ?: ModelFirmwareState(),
                     onSelect = { onSelect(option.value) },
                 )
             }
             Button(
                 onClick = onStart,
-                enabled = missing.isEmpty(),
+                enabled = missing.ready,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.boot_firmware))
             }
-            if (missing.isNotEmpty()) {
+            if (!missing.ready) {
                 Text(
                     stringResource(R.string.boot_firmware_waiting),
                     style = MaterialTheme.typography.bodySmall,
@@ -363,10 +376,10 @@ private fun ModelRow(
     system: SystemInfo,
     option: ModelOption,
     selected: Boolean,
-    missing: List<FirmwareFile>,
+    state: ModelFirmwareState,
     onSelect: () -> Unit,
 ) {
-    val ready = missing.isEmpty()
+    val ready = state.ready
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -395,7 +408,7 @@ private fun ModelRow(
                 } else {
                     stringResource(
                         R.string.model_firmware_missing,
-                        missing.joinToString(", ") { File(it.file).name },
+                        state.missingRequired.joinToString(", ") { File(it.file).name },
                     )
                 },
                 style = MaterialTheme.typography.labelSmall,
@@ -403,6 +416,20 @@ private fun ModelRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (state.missingOptional.isNotEmpty()) {
+                // Optional dumps never block the boot, so they are listed apart
+                // from the required ones and do not colour the row as an error.
+                Text(
+                    stringResource(
+                        R.string.model_firmware_optional,
+                        state.missingOptional.joinToString(", ") { File(it.file).name },
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
