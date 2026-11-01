@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
 sealed interface Screen {
     data object Home : Screen
     data class Games(val system: SystemInfo) : Screen
-    data class Play(val system: SystemInfo, val game: RomEntry) : Screen
+    data class Play(val system: SystemInfo, val game: RomEntry?) : Screen
 }
 
 @Composable

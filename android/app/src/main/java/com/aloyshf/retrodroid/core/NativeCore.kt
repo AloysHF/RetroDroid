@@ -16,7 +16,7 @@ object NativeCore {
 
     external fun nativeLoadCore(
         corePath: String,
-        contentPath: String,
+        contentPath: String?,
         systemDir: String,
         saveDir: String,
         optionsJson: String,

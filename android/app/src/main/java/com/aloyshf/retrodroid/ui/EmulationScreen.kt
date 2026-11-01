@@ -72,7 +72,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun EmulationScreen(system: SystemInfo, game: RomEntry, onExit: () -> Unit) {
+fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val audio = remember { AudioPlayer() }
@@ -100,21 +100,29 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, onExit: () -> Unit) {
     val saveFailedMessage = stringResource(R.string.state_save_failed)
     val loadStateFailedMessage = stringResource(R.string.state_load_failed)
     val noStateMessage = stringResource(R.string.no_state)
-    val stateFile = remember(game.uri) {
-        SessionFiles.stateFile(context, system.core, game.name, game.uri)
+    val stateFile = remember(game?.uri) {
+        SessionFiles.stateFile(
+            context,
+            system.core,
+            game?.name ?: "firmware",
+            game?.uri ?: android.net.Uri.EMPTY,
+        )
     }
 
     LaunchedEffect(Unit) {
         val result = withContext(Dispatchers.IO) {
             runCatching {
                 // Library games are plain files, so the core opens them in place.
-                val contentFile = File(requireNotNull(game.uri.path) { "missing game path" })
+                // Firmware-only systems boot with no content path.
+                val contentPath = game?.let {
+                    File(requireNotNull(it.uri.path) { "missing game path" }).absolutePath
+                }
                 val corePath = File(context.applicationInfo.nativeLibraryDir, system.soName).absolutePath
-                val systemDir = SessionFiles.systemDir(context, system.core)
+                val systemDir = SessionFiles.systemDir(context)
                 val saveDir = SessionFiles.saveDir(context, system.core)
                 val ok = NativeCore.nativeLoadCore(
                     corePath,
-                    contentFile.absolutePath,
+                    contentPath,
                     systemDir.absolutePath,
                     saveDir.absolutePath,
                     prefs.optionsJson(system.core),
@@ -325,7 +333,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry, onExit: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    game.name,
+                    game?.name ?: stringResource(R.string.boot_firmware),
                     color = Color.White.copy(alpha = 0.75f),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,

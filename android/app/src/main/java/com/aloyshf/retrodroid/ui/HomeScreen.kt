@@ -77,10 +77,14 @@ fun HomeScreen(
                 systems.forEach { Library.syncFirmware(context, it) }
             }
             systems.associate { system ->
-                val count = if (access) Library.countGames(system.id, system.extensions) else null
+                val count = if (access && !system.noGame) {
+                    Library.countGames(system.id, system.extensions)
+                } else {
+                    null
+                }
                 val missing = system.firmware.any { requirement ->
                     requirement.required &&
-                        !File(SessionFiles.systemDir(context, system.core), requirement.file).exists()
+                        !File(SessionFiles.systemDir(context), requirement.file).exists()
                 }
                 system.id to SystemRowState(count, missing)
             }
@@ -235,7 +239,11 @@ private fun SystemCard(
                     )
                 }
                 Text(
-                    if (count != null) pluralStringResource(R.plurals.folder_and_count, count, label, count) else label,
+                    when {
+                        system.noGame -> stringResource(R.string.boot_firmware)
+                        count != null -> pluralStringResource(R.plurals.folder_and_count, count, label, count)
+                        else -> label
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,

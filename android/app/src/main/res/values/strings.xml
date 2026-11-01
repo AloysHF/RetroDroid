@@ -42,6 +42,8 @@
     <string name="firmware_pick">Select the firmware files to import</string>
     <string name="firmware_imported">Firmware imported.</string>
     <string name="firmware_failed">Could not import firmware.</string>
+    <string name="boot_firmware">Start firmware</string>
+    <string name="boot_firmware_waiting">Import the firmware files above before starting.</string>
 
     <string name="loading">Loading…</string>
     <string name="load_failed">Could not start the game.</string>

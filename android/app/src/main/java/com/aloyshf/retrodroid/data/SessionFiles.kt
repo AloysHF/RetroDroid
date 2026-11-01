@@ -10,8 +10,9 @@ import java.io.File
 object SessionFiles {
     private fun root(context: Context) = File(context.filesDir, "retrodroid")
 
-    fun systemDir(context: Context, core: String): File =
-        File(root(context), "system/$core").apply { mkdirs() }
+    /** Shared system root; every core reads its own fixed subfolder below it. */
+    fun systemDir(context: Context): File =
+        File(root(context), "system").apply { mkdirs() }
 
     fun saveDir(context: Context, core: String): File =
         File(root(context), "saves/$core").apply { mkdirs() }

@@ -80,11 +80,12 @@ fn current_session() -> Option<Arc<Session>> {
     lock(session_slot()).clone()
 }
 
-/// Load a core and its content. Any previously loaded session is unloaded
+/// Load a core and its content. `content_path` is `None` for firmware-only
+/// systems that boot without a game. Any previously loaded session is unloaded
 /// first.
 pub fn load(
     core_path: &str,
-    content_path: &str,
+    content_path: Option<&str>,
     system_dir: &str,
     save_dir: &str,
     options_json: &str,
@@ -115,17 +116,25 @@ pub fn load(
         (fns.init)();
     }
 
-    let path = CString::new(content_path)
-        .map_err(|_| format!("Unsupported content path: {content_path}"))?;
+    let path = match content_path {
+        Some(content) => Some(
+            CString::new(content).map_err(|_| format!("Unsupported content path: {content}"))?,
+        ),
+        None => None,
+    };
     let game_info = retro_game_info {
-        path: path.as_ptr(),
+        path: path.as_ref().map_or(ptr::null(), |path| path.as_ptr()),
         data: ptr::null(),
         size: 0,
         meta: ptr::null(),
     };
 
     let loaded = std::panic::catch_unwind(AssertUnwindSafe(|| unsafe {
-        (fns.load_game)(&game_info)
+        (fns.load_game)(if content_path.is_some() {
+            &game_info as *const retro_game_info
+        } else {
+            ptr::null()
+        })
     }))
     .unwrap_or(false);
 
@@ -135,8 +144,9 @@ pub fn load(
             (fns.deinit)();
         }
         let detail = messages.join("; ");
+        let target = content_path.unwrap_or("the firmware");
         return Err(if detail.is_empty() {
-            format!("The core could not load {content_path}.")
+            format!("The core could not load {target}.")
         } else {
             detail
         });
@@ -171,7 +181,8 @@ pub fn load(
 
     let av = env::av_info();
     log::info!(
-        "Loaded {content_path} ({}x{}, {:.2} fps, {} Hz)",
+        "Loaded {} ({}x{}, {:.2} fps, {} Hz)",
+        content_path.unwrap_or("firmware-only session"),
         av.width,
         av.height,
         av.fps,
@@ -512,7 +523,7 @@ mod host_tests {
         std::fs::create_dir_all(&root).expect("temp dir");
         let root = root.to_str().expect("utf-8 temp path");
 
-        load(&core, &content, root, root, "{}").expect("core should load the content");
+        load(&core, Some(&content), root, root, "{}").expect("core should load the content");
         let session = current_session().expect("session");
 
         for _ in 0..120 {

@@ -13,8 +13,9 @@ import java.util.Locale
 
 /**
  * The fixed, user-visible game library at /sdcard/RetroDroid:
- * ROMs live in ROMs/<system>/ and firmware in BIOS/<system>/<model>/, mirroring
- * the paths the core profiles declare.
+ * ROMs live in ROMs/<system>/ and firmware in BIOS/<system>/<model>/. The
+ * core's own folder prefix (bbkemu/, wqxemu/, hyperscanemu/) is added when the
+ * files are copied into the shared private system root.
  */
 object Library {
     private const val ROOT_NAME = "RetroDroid"
@@ -32,10 +33,10 @@ object Library {
     fun biosDir(systemId: String): File = File(biosDir(), systemId)
 
     /**
-     * Path of a firmware file below BIOS/<system>/. Profiles may wrap every
-     * file in a shared top-level folder (WQX keeps its models below
-     * WQXEmu/); that wrapper is a core detail and is dropped from the
-     * user-visible layout.
+     * Path of a firmware file below BIOS/<system>/. Core profiles prefix every
+     * entry with the core folder (bbkemu/, wqxemu/, hyperscanemu/); that wrapper
+     * is dropped from the user-visible layout because the system folder already
+     * names the device.
      */
     fun biosRelativePath(system: SystemInfo, requirementFile: String): String {
         val parts = system.firmware.map { it.file.split('/') }
@@ -98,11 +99,12 @@ object Library {
 
     /**
      * Copies each firmware file from its fixed slot below BIOS/<system>/ into
-     * the private directory the core reads from.
+     * the shared system root the cores read from, restoring the core folder
+     * that the user-visible layout hides.
      */
     fun syncFirmware(context: Context, system: SystemInfo): Int {
         if (system.firmware.isEmpty()) return 0
-        val target = SessionFiles.systemDir(context, system.core)
+        val target = SessionFiles.systemDir(context)
         var synced = 0
 
         for (requirement in system.firmware) {

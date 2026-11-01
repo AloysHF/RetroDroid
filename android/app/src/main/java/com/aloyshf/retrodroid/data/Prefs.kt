@@ -10,6 +10,9 @@ class Prefs(context: Context) {
     fun optionsJson(core: String): String =
         prefs.getString("options_$core", null) ?: "{}"
 
+    fun option(core: String, key: String, default: String): String =
+        runCatching { JSONObject(optionsJson(core)).optString(key, default) }.getOrDefault(default)
+
     fun setOption(core: String, key: String, value: String) {
         val current = runCatching { JSONObject(optionsJson(core)) }.getOrElse { JSONObject() }
         current.put(key, value)

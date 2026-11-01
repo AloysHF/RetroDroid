@@ -20,6 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -45,8 +47,10 @@ import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.Library
+import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.SessionFiles
+import com.aloyshf.retrodroid.model.BootOption
 import com.aloyshf.retrodroid.model.SystemInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -58,18 +62,22 @@ import java.util.Locale
 fun GameListScreen(
     system: SystemInfo,
     onBack: () -> Unit,
-    onPlay: (RomEntry) -> Unit,
+    onPlay: (RomEntry?) -> Unit,
 ) {
     val context = LocalContext.current
     val language = Locale.getDefault().language
     val importedMessage = stringResource(R.string.firmware_imported)
     val failedMessage = stringResource(R.string.firmware_failed)
+    val prefs = remember { Prefs(context) }
 
     var hasAccess by remember { mutableStateOf(Library.hasAccess(context)) }
     var games by remember { mutableStateOf<List<RomEntry>>(emptyList()) }
     var scanning by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
     var firmwareVersion by remember { mutableIntStateOf(0) }
+    var model by remember(system.id) {
+        mutableStateOf(system.defaultBootValue(prefs))
+    }
 
     OnResume {
         hasAccess = Library.hasAccess(context)
@@ -78,20 +86,19 @@ fun GameListScreen(
 
     val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNullOrEmpty()) return@rememberLauncherForActivityResult
-        val target = SessionFiles.systemDir(context, system.core)
-        val expectedByName = system.firmware.groupBy { File(it.file).name.lowercase() }
+        val target = SessionFiles.systemDir(context)
+        val expectedByName = system.firmware.groupBy { File(it.file).name }
         var copied = 0
         for (uri in uris) {
             val name = (DocumentFile.fromSingleUri(context, uri)?.name ?: uri.lastPathSegment)?.takeIf { it.isNotBlank() } ?: continue
             val fileName = File(name).name
-            // Firmware profiles may name a path below the system directory
-            // (WQX keeps one folder per model); match the picked file against
-            // those names and create the folders it needs.
-            val destinations = expectedByName[fileName.lowercase()]?.map { it.file } ?: listOf(fileName)
+            // Firmware names are case-sensitive; one basename may exist for
+            // several model folders (BBK A4980/A4988), so copy to each match.
+            val destinations = expectedByName[fileName] ?: continue
             val ok = runCatching {
                 val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("unreadable")
-                destinations.forEach { relative ->
-                    val out = File(target, relative)
+                destinations.forEach { requirement ->
+                    val out = File(target, requirement.file)
                     out.parentFile?.mkdirs()
                     out.writeBytes(bytes)
                 }
@@ -108,7 +115,7 @@ fun GameListScreen(
             val access = Library.hasAccess(context)
             if (access) {
                 Library.syncFirmware(context, system)
-                Library.scanGames(system.id, system.extensions)
+                if (system.noGame) emptyList() else Library.scanGames(system.id, system.extensions)
             } else {
                 emptyList()
             }
@@ -118,9 +125,15 @@ fun GameListScreen(
         firmwareVersion++
     }
 
-    val missingFirmware = remember(firmwareVersion) {
+    val missingFirmware = remember(firmwareVersion, model) {
+        val systemDir = SessionFiles.systemDir(context)
         system.firmware.filter { requirement ->
-            requirement.required && !File(SessionFiles.systemDir(context, system.core), requirement.file).exists()
+            val applies = if (system.noGame && model.isNotBlank()) {
+                requirement.file.contains("/$model/")
+            } else {
+                requirement.required
+            }
+            applies && !File(systemDir, requirement.file).exists()
         }
     }
 
@@ -165,7 +178,7 @@ fun GameListScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (system.firmware.isNotEmpty()) {
+            if (system.firmware.any { it.required } || missingFirmware.isNotEmpty()) {
                 FirmwareBanner(
                     names = missingFirmware.map { Library.biosRelativePath(system, it.file) },
                     hints = missingFirmware.map { it.hint(language) }.filter { it.isNotBlank() },
@@ -175,45 +188,117 @@ fun GameListScreen(
                 )
             }
 
-            when {
-                scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(12.dp))
-                        Text(stringResource(R.string.scanning), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-
-                games.isEmpty() -> EmptyState(
-                    text = if (!hasAccess) {
-                        stringResource(R.string.library_denied, Library.root().absolutePath)
-                    } else {
-                        stringResource(R.string.roms_hint, Library.romDir(system.id).absolutePath)
+            if (system.noGame) {
+                BootPanel(
+                    system = system,
+                    language = language,
+                    selected = model,
+                    firmwareReady = missingFirmware.isEmpty(),
+                    onSelect = { option, value ->
+                        prefs.setOption(system.core, option.key, value)
+                        model = value
                     },
-                    action = stringResource(R.string.refresh),
-                    onAction = { refreshKey++ },
+                    onStart = { onPlay(null) },
                 )
-
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    item {
-                        Text(
-                            pluralStringResource(R.plurals.game_count, games.size, games.size),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 4.dp),
-                        )
+            } else {
+                when {
+                    scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(12.dp))
+                            Text(stringResource(R.string.scanning), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    items(games, key = { it.uri.toString() }) { entry ->
-                        GameRow(entry) { onPlay(entry) }
+
+                    games.isEmpty() -> EmptyState(
+                        text = if (!hasAccess) {
+                            stringResource(R.string.library_denied, Library.root().absolutePath)
+                        } else {
+                            stringResource(R.string.roms_hint, Library.romDir(system.id).absolutePath)
+                        },
+                        action = stringResource(R.string.refresh),
+                        onAction = { refreshKey++ },
+                    )
+
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item {
+                            Text(
+                                pluralStringResource(R.plurals.game_count, games.size, games.size),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                            )
+                        }
+                        items(games, key = { it.uri.toString() }) { entry ->
+                            GameRow(entry) { onPlay(entry) }
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun BootPanel(
+    system: SystemInfo,
+    language: String,
+    selected: String,
+    firmwareReady: Boolean,
+    onSelect: (BootOption, String) -> Unit,
+    onStart: () -> Unit,
+) {
+    val option = system.bootOptions.firstOrNull()
+    var expanded by remember { mutableStateOf(false) }
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            option?.let { boot ->
+                Text(
+                    boot.label(language),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Box {
+                    TextButton(onClick = { expanded = true }) {
+                        Text(selected.ifBlank { boot.values.first() })
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        boot.values.forEach { value ->
+                            DropdownMenuItem(
+                                text = { Text(value) },
+                                onClick = {
+                                    expanded = false
+                                    onSelect(boot, value)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            Button(onClick = onStart, enabled = firmwareReady, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.boot_firmware))
+            }
+            if (!firmwareReady) {
+                Text(
+                    stringResource(R.string.boot_firmware_waiting),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+private fun SystemInfo.defaultBootValue(prefs: Prefs): String {
+    val option = bootOptions.firstOrNull() ?: return ""
+    return prefs.option(core, option.key, option.values.first())
 }
 
 @Composable

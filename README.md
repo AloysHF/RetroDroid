@@ -75,12 +75,14 @@ there is nothing to pick on every launch:
 │   └── bbk/
 └── BIOS/
     ├── bbk/
-    │   └── A4980/          8.BIN, E.BIN
+    │   ├── a4980/          8.BIN, E.BIN
+    │   └── a4988/          8.BIN, E.BIN (optional model)
+    ├── coolbar/            coolbaremu_orientation.csv (optional)
     ├── hyperscan/          spg290.bin, hyperscan.bin
     └── wqx/
-        ├── nc1020/         obj_lu.bin, nc1020.fls
+        ├── nc1020/         nc1020.rom, nc1020.fls
         ├── pc1000/         pc1000.rom, pc1000.nor
-        ├── cc800/          obj.bin, cc800.fls
+        ├── cc800/          cc800.rom, cc800.fls
         ├── nc2000/         nc2000.nor, nc2000.nand, nc2000.nand0
         └── nc3000/         nc3000.nor, nc3000.nand, nc3000.nand0
 ```
@@ -88,13 +90,18 @@ there is nothing to pick on every launch:
 1. On first launch, grant `All files access` so the app can read the library.
    The folder tree is created automatically; drop game files into the
    subfolder of their system.
-2. Firmware lives in `BIOS/<system>/`, with one subfolder per model on systems
-   whose core loads model-specific files (BBK A4980, the WQX models). The game
-   list shows the exact paths a system still needs; matching files are copied
-   into the core's private directory on refresh. Only systems that need
-   firmware get a `BIOS/<system>/` folder.
-3. Select a game to start it. The pause menu offers save states, core options,
-   scaling and screen rotation; the back gesture returns to the game list.
+2. Firmware and support files live in `BIOS/<system>/`, with one subfolder per
+   model on systems whose core loads model-specific files (BBK a4980/a4988, the
+   WQX models). Coolbar's optional orientation profile goes directly in
+   `BIOS/coolbar/`. File and folder names are case-sensitive. The game list
+   shows the exact paths a system still needs; matching files are copied into
+   the shared private system root on refresh, where every core reads
+   `<system>/<core>/…` (for example `bbkemu/a4980/8.BIN`). Only systems with
+   support files get a `BIOS/<system>/` folder.
+3. Select a game to start it. WQX has no game content: pick the machine model
+   and press **Start firmware**. The pause menu offers save states, core
+   options, scaling and screen rotation; the back gesture returns to the game
+   list.
 
 Games are opened in place from the library. For disc-based systems keep the
 `.cue` sheet next to its tracks (`ROMs/playdia/game.cue` and
