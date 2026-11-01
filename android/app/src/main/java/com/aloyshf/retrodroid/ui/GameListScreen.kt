@@ -1,6 +1,7 @@
 package com.aloyshf.retrodroid.ui
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,7 @@ import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.Library
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
+import com.aloyshf.retrodroid.data.RomTree
 import com.aloyshf.retrodroid.data.SessionFiles
 import com.aloyshf.retrodroid.model.BootOption
 import com.aloyshf.retrodroid.model.SystemInfo
@@ -61,6 +63,8 @@ import java.util.Locale
 @Composable
 fun GameListScreen(
     system: SystemInfo,
+    folder: String,
+    onFolder: (String) -> Unit,
     onBack: () -> Unit,
     onPlay: (RomEntry?) -> Unit,
 ) {
@@ -82,6 +86,12 @@ fun GameListScreen(
     OnResume {
         hasAccess = Library.hasAccess(context)
         refreshKey++
+    }
+
+    // Walking into a folder is a step the system back button should undo
+    // before leaving the system entirely.
+    BackHandler(enabled = folder.isNotEmpty()) {
+        onFolder(RomTree.parent(folder))
     }
 
     val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
@@ -125,6 +135,12 @@ fun GameListScreen(
         firmwareVersion++
     }
 
+    // A refresh or a deleted folder can leave us standing somewhere that no
+    // longer holds games; fall back to the system root in that case.
+    LaunchedEffect(games, scanning) {
+        if (!scanning && !RomTree.exists(games, folder)) onFolder("")
+    }
+
     val missingFirmware = remember(firmwareVersion, model) {
         val systemDir = SessionFiles.systemDir(context)
         system.firmware.filter { requirement ->
@@ -137,7 +153,19 @@ fun GameListScreen(
         }
     }
 
-    val folderPath = Library.romDir(system.id).absolutePath
+    // The home screen already names the absolute library root, so the bar only
+    // needs the short path — an absolute one gets ellipsized before the folder
+    // you are standing in.
+    val folderPath = listOf("ROMs", system.id, folder)
+        .filter { it.isNotEmpty() }
+        .joinToString("/")
+    val folders = remember(games, folder) { RomTree.folders(games, folder) }
+    val folderGames = remember(games, folder) { RomTree.games(games, folder) }
+    val folderCounts = remember(games, folders) {
+        folders.associateWith { RomTree.countBelow(games, it) }
+    }
+    val totalGames = remember(games, folder) { RomTree.countBelow(games, folder) }
+    val atRoot = folder.isEmpty()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -162,8 +190,9 @@ fun GameListScreen(
                     }
                 },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                    // One level up inside the library, out of the system at its root.
+                    TextButton(onClick = { if (atRoot) onBack() else onFolder(RomTree.parent(folder)) }) {
+                        Text(if (atRoot) "←" else "↑", style = MaterialTheme.typography.titleLarge)
                     }
                 },
                 actions = {
@@ -227,13 +256,19 @@ fun GameListScreen(
                     ) {
                         item {
                             Text(
-                                pluralStringResource(R.plurals.game_count, games.size, games.size),
+                                pluralStringResource(R.plurals.game_count, totalGames, totalGames),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 4.dp),
                             )
                         }
-                        items(games, key = { it.uri.toString() }) { entry ->
+                        items(folders, key = { "folder:$it" }) { path ->
+                            FolderRow(
+                                name = RomTree.name(path),
+                                count = folderCounts[path] ?: 0,
+                            ) { onFolder(path) }
+                        }
+                        items(folderGames, key = { it.uri.toString() }) { entry ->
                             GameRow(entry) { onPlay(entry) }
                         }
                     }
@@ -369,6 +404,35 @@ private fun GameRow(entry: RomEntry, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(8.dp))
             Text("▶", color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun FolderRow(name: String, count: Int, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "$name/",
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    pluralStringResource(R.plurals.game_count, count, count),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text("›", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
