@@ -153,8 +153,12 @@ fun GameListScreen(
         }
     }
 
-    val romDir = Library.romDir(system.id)
-    val folderPath = File(romDir, folder).absolutePath
+    // The home screen already names the absolute library root, so the bar only
+    // needs the short path — an absolute one gets ellipsized before the folder
+    // you are standing in.
+    val folderPath = listOf("ROMs", system.id, folder)
+        .filter { it.isNotEmpty() }
+        .joinToString("/")
     val folders = remember(games, folder) { RomTree.folders(games, folder) }
     val folderGames = remember(games, folder) { RomTree.games(games, folder) }
     val folderCounts = remember(games, folders) {
