@@ -166,7 +166,7 @@ generate the system registry; nothing else is hard-coded in the app.
 | `no_game` | `true` when the core boots without content (`retro_load_game(NULL)`); RetroDroid then shows a model selector and a **Start firmware** button instead of a game list. |
 | `boot_options` | Model choices shown before boot: `[{ "key": "wqxemu_model", "label": { "en": "...", "zh": "..." }, "values": ["nc1020", "..."] }]`. The first value is the default; the selection is stored as the core option `key`. |
 | `save_state_format` | Version written into save-state envelopes; must match the core. |
-| `firmware` | Files the core reads from the system directory, relative to the shared system root: `[{ "file": "wqxemu/nc1020/nc1020.rom", "required": true, "hint": { "en": "...", "zh": "..." } }]`. RetroDroid shows the same path below `BIOS/<system>/` with the leading core folder hidden. `required: false` marks an optional support file (for example `coolbaremu/coolbaremu_orientation.csv`): it is copied when present and never blocks loading. |
+| `firmware` | Files the core reads from the system directory, relative to the shared system root: `[{ "file": "wqxemu/nc1020/obj_lu.bin", "required": true, "hint": { "en": "...", "zh": "..." } }]`. RetroDroid shows the same path below `BIOS/<system>/` with the leading core folder hidden. `required: false` marks an optional support file (for example `coolbaremu/coolbaremu_orientation.csv`): it is copied when present and never blocks loading. |
 | `input.preset` | Frontend layout id: `dpad-ab-select`, `dpad-abcd-select`, `dpad-ab-lr-select`, `qwerty`. |
 | `video.orientation` | Preferred emulation orientation: `landscape` or `portrait`. |
 
