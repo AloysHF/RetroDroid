@@ -76,17 +76,22 @@ fn env() -> &'static Mutex<EnvState> {
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     // A panic in a callback must not disable the emulator for good; recover the
     // guarded state instead of panicking across the C ABI.
-    mutex.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 /// Reset the per-session state before a core is loaded.
 pub fn reset(system_dir: &str, save_dir: &str, saved_options: &BTreeMap<String, String>) {
     let mut state = lock(env());
-    let mut next = EnvState::default();
-    next.system_dir = CString::new(system_dir).unwrap_or_else(|_| CString::new("/").expect("literal"));
-    next.save_dir = CString::new(save_dir).unwrap_or_else(|_| CString::new("/").expect("literal"));
-    next.pending_options = saved_options.clone();
-    next.language = state.language;
+    let next = EnvState {
+        system_dir: CString::new(system_dir)
+            .unwrap_or_else(|_| CString::new("/").expect("literal")),
+        save_dir: CString::new(save_dir).unwrap_or_else(|_| CString::new("/").expect("literal")),
+        pending_options: saved_options.clone(),
+        language: state.language,
+        ..EnvState::default()
+    };
     *state = next;
 }
 
@@ -435,8 +440,16 @@ pub unsafe extern "C" fn environment(cmd: u32, data: *mut c_void) -> bool {
 mod tests {
     use super::*;
 
+    // These tests share the process-wide env state, so they must not overlap.
+    static TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    fn serial() -> MutexGuard<'static, ()> {
+        lock(&TEST_LOCK)
+    }
+
     #[test]
     fn reset_installs_directories_and_selections() {
+        let _guard = serial();
         let mut saved = BTreeMap::new();
         saved.insert("key".to_owned(), "b".to_owned());
         reset("/system", "/save", &saved);
@@ -444,12 +457,16 @@ mod tests {
         let state = lock(env());
         assert_eq!(state.system_dir.to_str().unwrap(), "/system");
         assert_eq!(state.save_dir.to_str().unwrap(), "/save");
-        assert_eq!(state.pending_options.get("key").map(String::as_str), Some("b"));
+        assert_eq!(
+            state.pending_options.get("key").map(String::as_str),
+            Some("b")
+        );
         assert_eq!(state.pixel_format, PixelFormat::Rgb1555);
     }
 
     #[test]
     fn messages_are_capped() {
+        let _guard = serial();
         reset("/s", "/v", &BTreeMap::new());
         take_messages();
         for index in 0..40 {

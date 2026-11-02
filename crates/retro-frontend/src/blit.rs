@@ -152,7 +152,15 @@ mod tests {
         let mut out = Vec::new();
         let (w, h) = convert_frame(&padded, 2, 2, 6, PixelFormat::Rgb565, 0, &mut out);
         assert_eq!((w, h), (2, 2));
-        assert_eq!(out, [rgb565(255, 0, 0), rgb565(0, 255, 0), rgb565(255, 0, 0), rgb565(0, 255, 0)]);
+        assert_eq!(
+            out,
+            [
+                rgb565(255, 0, 0),
+                rgb565(0, 255, 0),
+                rgb565(255, 0, 0),
+                rgb565(0, 255, 0)
+            ]
+        );
     }
 
     #[test]

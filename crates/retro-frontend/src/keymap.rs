@@ -112,8 +112,11 @@ pub fn keycode_to_retro(android: i32) -> Option<u32> {
 pub fn character_for(retro: u32, shift: bool) -> u32 {
     match retro {
         97..=122 => {
-            let base = if shift { retro - 32 } else { retro };
-            base
+            if shift {
+                retro - 32
+            } else {
+                retro
+            }
         }
         48..=57 => {
             if !shift {

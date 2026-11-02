@@ -7,24 +7,13 @@ use std::sync::{Mutex, MutexGuard, OnceLock};
 use crate::blit;
 use crate::env;
 
+#[derive(Default)]
 pub struct VideoState {
     pub pixels: Vec<u16>,
     pub width: usize,
     pub height: usize,
     pub dirty: bool,
     pub frames: u64,
-}
-
-impl Default for VideoState {
-    fn default() -> Self {
-        Self {
-            pixels: Vec::new(),
-            width: 0,
-            height: 0,
-            dirty: false,
-            frames: 0,
-        }
-    }
 }
 
 static VIDEO: OnceLock<Mutex<VideoState>> = OnceLock::new();
@@ -34,7 +23,9 @@ pub fn video() -> &'static Mutex<VideoState> {
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 pub fn reset() {
@@ -71,7 +62,15 @@ pub unsafe extern "C" fn video_refresh(data: *const c_void, width: u32, height: 
         return;
     };
     let src = std::slice::from_raw_parts(data as *const u8, len);
-    let (out_w, out_h) = blit::convert_frame(src, width, height, pitch, format, rotation, &mut state.pixels);
+    let (out_w, out_h) = blit::convert_frame(
+        src,
+        width,
+        height,
+        pitch,
+        format,
+        rotation,
+        &mut state.pixels,
+    );
     state.width = out_w;
     state.height = out_h;
     state.dirty = true;

@@ -1,5 +1,17 @@
 # RetroDroid
 
+<p align="center">
+  <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml/badge.svg" alt="Android APK"></a>
+  <a href="https://github.com/AloysHF/RetroDroid/releases/latest"><img src="https://img.shields.io/github/v/release/AloysHF/RetroDroid" alt="Release"></a>
+  <a href="https://github.com/AloysHF/RetroDroid/releases"><img src="https://img.shields.io/github/downloads/AloysHF/RetroDroid/total" alt="Downloads"></a>
+  <a href="https://sonarcloud.io/dashboard?id=AloysHF_RetroDroid"><img src="https://sonarcloud.io/api/project_badges/measure?project=AloysHF_RetroDroid&metric=alert_status" alt="Quality Gate Status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License: BSD 3-Clause"></a>
+  <a href="android/app/build.gradle.kts"><img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white" alt="Android 7.0+"></a>
+  <a href="https://discord.gg/7XDdSrYD"><img src="https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://qm.qq.com/q/LAO7DKAWUC"><img src="https://img.shields.io/badge/QQ%E7%BE%A4-Join%20Us-12B7F5?logo=tencent-qq&logoColor=white" alt="QQ Group"></a>
+</p>
+
 An all-in-one libretro frontend for Android. One APK, nine systems, no
 in-app core downloads: every emulator core ships inside the app and is updated
 together with the app.
@@ -136,7 +148,8 @@ cp cores/local.env.example cores/local.env
 
 Outputs land in `android/app/build/outputs/apk/`: per-ABI APKs
 (`arm64-v8a`, `x86_64`) plus the universal APK. CI builds the same set on every
-push and attaches the APKs to the release on `v*` tags.
+push, the release workflow attaches them to the release on `v*` tags, and the
+rolling `nightly-build` prerelease carries the latest master APKs.
 
 ## Legal
 

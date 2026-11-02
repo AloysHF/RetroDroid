@@ -12,7 +12,10 @@ pub type WindowPtr = usize;
 mod imp {
     use super::WindowPtr;
 
-    pub unsafe fn from_surface(_env: *mut std::ffi::c_void, _surface: *mut std::ffi::c_void) -> WindowPtr {
+    pub unsafe fn from_surface(
+        _env: *mut std::ffi::c_void,
+        _surface: *mut std::ffi::c_void,
+    ) -> WindowPtr {
         0
     }
 
@@ -87,7 +90,12 @@ mod imp {
         let geometry = ((width as u64) << 32) | height as u64;
         unsafe {
             if LAST_GEOMETRY.load(Ordering::Relaxed) != geometry {
-                ANativeWindow_setBuffersGeometry(window, width as i32, height as i32, WINDOW_FORMAT_RGB_565);
+                ANativeWindow_setBuffersGeometry(
+                    window,
+                    width as i32,
+                    height as i32,
+                    WINDOW_FORMAT_RGB_565,
+                );
                 LAST_GEOMETRY.store(geometry, Ordering::Relaxed);
             }
 

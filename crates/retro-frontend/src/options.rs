@@ -50,7 +50,11 @@ impl CoreOption {
     }
 
     pub fn select(&mut self, value: &str) -> bool {
-        match self.choices.iter().position(|c| c.to_bytes() == value.as_bytes()) {
+        match self
+            .choices
+            .iter()
+            .position(|c| c.to_bytes() == value.as_bytes())
+        {
             Some(index) => {
                 self.selected = index;
                 true
@@ -99,8 +103,7 @@ mod tests {
 
     #[test]
     fn parses_standard_entry() {
-        let option =
-            CoreOption::parse("native32emu_volume", "Audio Volume; 100|90|80").unwrap();
+        let option = CoreOption::parse("native32emu_volume", "Audio Volume; 100|90|80").unwrap();
         assert_eq!(option.label, "Audio Volume");
         assert_eq!(option.choices.len(), 3);
         assert_eq!(option.selection(), "100");
