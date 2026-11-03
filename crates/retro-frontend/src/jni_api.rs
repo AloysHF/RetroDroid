@@ -352,7 +352,8 @@ pub extern "system" fn Java_com_aloyshf_retrodroid_core_NativeCore_nativeReadAud
             }
             let length = env
                 .get_array_length(&dst)
-                .map_err(|error| format!("Invalid audio buffer: {error}"))? as usize;
+                .map_err(|error| format!("Invalid audio buffer: {error}"))?
+                as usize;
             let want = (frames * 2).min(length);
             if want == 0 {
                 return Ok(0);
