@@ -15,9 +15,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,7 +57,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
+import com.aloyshf.retrodroid.AppLocale
 import com.aloyshf.retrodroid.R
+import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Library
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
@@ -76,10 +83,11 @@ fun GameListScreen(
     onPlay: (RomEntry?) -> Unit,
 ) {
     val context = LocalContext.current
-    val language = Locale.getDefault().language
+    val language = AppLocale.language(context)
     val importedMessage = stringResource(R.string.firmware_imported)
     val failedMessage = stringResource(R.string.firmware_failed)
     val prefs = remember { Prefs(context) }
+    val layout = remember { prefs.gameLayout() }
 
     var hasAccess by remember { mutableStateOf(Library.hasAccess(context)) }
     var games by remember { mutableStateOf<List<RomEntry>>(emptyList()) }
@@ -278,30 +286,123 @@ fun GameListScreen(
                         onAction = { refreshKey++ },
                     )
 
-                    else -> LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        item {
-                            Text(
-                                pluralStringResource(R.plurals.game_count, totalGames, totalGames),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 4.dp),
-                            )
-                        }
-                        items(folders, key = { "folder:$it" }) { path ->
-                            FolderRow(
-                                name = RomTree.name(path),
-                                count = folderCounts[path] ?: 0,
-                            ) { onFolder(path) }
-                        }
-                        items(folderGames, key = { it.uri.toString() }) { entry ->
-                            GameRow(entry) { onPlay(entry) }
-                        }
-                    }
+                    layout == GameLayout.GRID -> GameGridContent(
+                        folders = folders,
+                        folderCounts = folderCounts,
+                        games = folderGames,
+                        totalGames = totalGames,
+                        onFolder = onFolder,
+                        onPlay = onPlay,
+                    )
+
+                    else -> GameListContent(
+                        folders = folders,
+                        folderCounts = folderCounts,
+                        games = folderGames,
+                        totalGames = totalGames,
+                        onFolder = onFolder,
+                        onPlay = onPlay,
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameListContent(
+    folders: List<String>,
+    folderCounts: Map<String, Int>,
+    games: List<RomEntry>,
+    totalGames: Int,
+    onFolder: (String) -> Unit,
+    onPlay: (RomEntry) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item { GameCountHeader(totalGames) }
+        items(folders, key = { "folder:$it" }) { path ->
+            FolderRow(
+                name = RomTree.name(path),
+                count = folderCounts[path] ?: 0,
+            ) { onFolder(path) }
+        }
+        items(games, key = { it.uri.toString() }) { entry ->
+            GameRow(entry) { onPlay(entry) }
+        }
+    }
+}
+
+@Composable
+private fun GameGridContent(
+    folders: List<String>,
+    folderCounts: Map<String, Int>,
+    games: List<RomEntry>,
+    totalGames: Int,
+    onFolder: (String) -> Unit,
+    onPlay: (RomEntry) -> Unit,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(150.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(span = { GridItemSpan(maxLineSpan) }) { GameCountHeader(totalGames) }
+        gridItems(folders, key = { "folder:$it" }, span = { GridItemSpan(maxLineSpan) }) { path ->
+            FolderRow(
+                name = RomTree.name(path),
+                count = folderCounts[path] ?: 0,
+            ) { onFolder(path) }
+        }
+        gridItems(games, key = { it.uri.toString() }) { entry ->
+            GameTile(entry) { onPlay(entry) }
+        }
+    }
+}
+
+@Composable
+private fun GameCountHeader(totalGames: Int) {
+    Text(
+        pluralStringResource(R.plurals.game_count, totalGames, totalGames),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun GameTile(entry: RomEntry, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                entry.name,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    if (entry.size > 0) formatSize(entry.size) else "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text("▶", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             }
         }
     }

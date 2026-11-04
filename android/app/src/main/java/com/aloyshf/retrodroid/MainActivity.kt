@@ -1,6 +1,7 @@
 package com.aloyshf.retrodroid
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -24,33 +25,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.Library
+import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
+import com.aloyshf.retrodroid.data.ThemeMode
 import com.aloyshf.retrodroid.model.Registry
 import com.aloyshf.retrodroid.model.SystemInfo
+import com.aloyshf.retrodroid.ui.AboutScreen
 import com.aloyshf.retrodroid.ui.EmulationScreen
 import com.aloyshf.retrodroid.ui.GameListScreen
 import com.aloyshf.retrodroid.ui.HomeScreen
 import com.aloyshf.retrodroid.ui.LibrarySetupScreen
 import com.aloyshf.retrodroid.ui.OnResume
 import com.aloyshf.retrodroid.ui.RetroDroidTheme
+import com.aloyshf.retrodroid.ui.SettingsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // The app is always dark, so the system bars always need light icons.
+        val prefs = Prefs(this)
+        requestedOrientation = prefs.screenOrientation().activityValue
+        // Transparent bars; their icon colour follows the app theme.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         NativeCore.nativeInit()
-        NativeCore.nativeSetLanguage(if (Locale.getDefault().language.startsWith("zh")) 12 else 0)
+        NativeCore.nativeSetLanguage(if (AppLocale.language(this).startsWith("zh")) 12 else 0)
         setContent {
-            RetroDroidTheme {
+            var themeMode by remember { mutableStateOf(prefs.themeMode()) }
+            RetroDroidTheme(themeMode) {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    App()
+                    App(
+                        themeMode = themeMode,
+                        onThemeModeChange = { mode ->
+                            prefs.setThemeMode(mode)
+                            themeMode = mode
+                        },
+                    )
                 }
             }
         }
@@ -60,6 +77,10 @@ class MainActivity : ComponentActivity() {
 sealed interface Screen {
     data object Home : Screen
 
+    data object Settings : Screen
+
+    data object About : Screen
+
     /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
     data class Games(val system: SystemInfo, val folder: String = "") : Screen
 
@@ -67,7 +88,7 @@ sealed interface Screen {
 }
 
 @Composable
-private fun App() {
+private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     val context = LocalContext.current
     val systems = remember { Registry.load(context) }
     var access by remember { mutableStateOf(Library.hasAccess(context)) }
@@ -114,6 +135,18 @@ private fun App() {
             access = access,
             onRequestAccess = { skipped = false },
             onOpenSystem = { screen = Screen.Games(it) },
+            onOpenSettings = { screen = Screen.Settings },
+        )
+
+        Screen.Settings -> SettingsScreen(
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange,
+            onOpenAbout = { screen = Screen.About },
+            onBack = { screen = Screen.Home },
+        )
+
+        Screen.About -> AboutScreen(
+            onBack = { screen = Screen.Settings },
         )
 
         is Screen.Games -> GameListScreen(

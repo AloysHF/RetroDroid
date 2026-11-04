@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.aloyshf.retrodroid.AppLocale
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.Library
 import com.aloyshf.retrodroid.data.SessionFiles
@@ -51,7 +52,6 @@ import com.aloyshf.retrodroid.model.SystemInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Locale
 
 private data class SystemRowState(
     val count: Int?,
@@ -77,9 +77,10 @@ fun HomeScreen(
     access: Boolean,
     onRequestAccess: () -> Unit,
     onOpenSystem: (SystemInfo) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
-    val language = Locale.getDefault().language
+    val language = AppLocale.language(context)
     var rows by remember { mutableStateOf<Map<String, SystemRowState>>(emptyMap()) }
     var refreshKey by remember { mutableIntStateOf(0) }
 
@@ -123,6 +124,11 @@ fun HomeScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
+                actions = {
+                    TextButton(onClick = onOpenSettings) {
+                        Text(stringResource(R.string.settings_title))
+                    }
+                },
             )
         },
     ) { padding ->
