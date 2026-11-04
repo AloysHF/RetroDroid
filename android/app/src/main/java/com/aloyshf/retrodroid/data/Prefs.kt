@@ -45,6 +45,13 @@ class Prefs(context: Context) {
     fun setThemeMode(mode: ThemeMode) {
         prefs.edit().putInt("theme_mode", mode.ordinal).apply()
     }
+
+    fun language(): AppLanguage =
+        AppLanguage.entries.getOrElse(prefs.getInt("language", 0)) { AppLanguage.SYSTEM }
+
+    fun setLanguage(language: AppLanguage) {
+        prefs.edit().putInt("language", language.ordinal).apply()
+    }
 }
 
 enum class Scaling {
@@ -62,4 +69,10 @@ enum class ThemeMode {
     SYSTEM,
     DARK,
     LIGHT,
+}
+
+enum class AppLanguage(val tag: String?) {
+    SYSTEM(null),
+    CHINESE("zh"),
+    ENGLISH("en"),
 }

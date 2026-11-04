@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
+import com.aloyshf.retrodroid.AppLocale
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Library
@@ -82,7 +83,7 @@ fun GameListScreen(
     onPlay: (RomEntry?) -> Unit,
 ) {
     val context = LocalContext.current
-    val language = Locale.getDefault().language
+    val language = AppLocale.language(context)
     val importedMessage = stringResource(R.string.firmware_imported)
     val failedMessage = stringResource(R.string.firmware_failed)
     val prefs = remember { Prefs(context) }

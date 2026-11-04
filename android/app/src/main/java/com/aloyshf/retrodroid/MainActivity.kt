@@ -1,6 +1,7 @@
 package com.aloyshf.retrodroid
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -38,9 +39,12 @@ import com.aloyshf.retrodroid.ui.RetroDroidTheme
 import com.aloyshf.retrodroid.ui.SettingsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = Prefs(this)
@@ -50,7 +54,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         NativeCore.nativeInit()
-        NativeCore.nativeSetLanguage(if (Locale.getDefault().language.startsWith("zh")) 12 else 0)
+        NativeCore.nativeSetLanguage(if (AppLocale.language(this).startsWith("zh")) 12 else 0)
         setContent {
             var themeMode by remember { mutableStateOf(prefs.themeMode()) }
             RetroDroidTheme(themeMode) {

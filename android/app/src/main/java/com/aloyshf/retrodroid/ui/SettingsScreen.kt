@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aloyshf.retrodroid.R
+import com.aloyshf.retrodroid.data.AppLanguage
 import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.ThemeMode
@@ -53,6 +54,8 @@ fun SettingsScreen(
     var layout by remember { mutableStateOf(prefs.gameLayout()) }
     var layoutDialog by remember { mutableStateOf(false) }
     var themeDialog by remember { mutableStateOf(false) }
+    var language by remember { mutableStateOf(prefs.language()) }
+    var languageDialog by remember { mutableStateOf(false) }
 
     BackHandler(onBack = onBack)
 
@@ -90,6 +93,28 @@ fun SettingsScreen(
                 themeDialog = false
             },
             onDismiss = { themeDialog = false },
+        )
+    }
+
+    if (languageDialog) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_language),
+            choices = AppLanguage.entries.map { option ->
+                Choice(
+                    value = option,
+                    label = stringResource(languageLabel(option)),
+                    selected = option == language,
+                )
+            },
+            onSelect = { option ->
+                languageDialog = false
+                if (option != language) {
+                    language = option
+                    prefs.setLanguage(option)
+                    context.findActivity()?.recreate()
+                }
+            },
+            onDismiss = { languageDialog = false },
         )
     }
 
@@ -131,6 +156,15 @@ fun SettingsScreen(
                     summary = stringResource(R.string.settings_theme_summary),
                     value = stringResource(themeLabel(themeMode)),
                     onClick = { themeDialog = true },
+                )
+            }
+
+            SettingsSection(stringResource(R.string.settings_section_general)) {
+                SettingRow(
+                    title = stringResource(R.string.settings_language),
+                    summary = stringResource(R.string.settings_language_summary),
+                    value = stringResource(languageLabel(language)),
+                    onClick = { languageDialog = true },
                 )
             }
         }
@@ -239,4 +273,10 @@ private fun themeLabel(mode: ThemeMode): Int = when (mode) {
     ThemeMode.SYSTEM -> R.string.settings_theme_system
     ThemeMode.DARK -> R.string.settings_theme_dark
     ThemeMode.LIGHT -> R.string.settings_theme_light
+}
+
+private fun languageLabel(language: AppLanguage): Int = when (language) {
+    AppLanguage.SYSTEM -> R.string.settings_language_system
+    AppLanguage.CHINESE -> R.string.settings_language_chinese
+    AppLanguage.ENGLISH -> R.string.settings_language_english
 }
