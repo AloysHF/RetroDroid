@@ -1,6 +1,7 @@
 package com.aloyshf.retrodroid.data
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import com.aloyshf.retrodroid.model.SystemInfo
 import org.json.JSONObject
 
@@ -52,6 +53,13 @@ class Prefs(context: Context) {
     fun setLanguage(language: AppLanguage) {
         prefs.edit().putInt("language", language.ordinal).apply()
     }
+
+    fun screenOrientation(): ScreenOrientation =
+        ScreenOrientation.entries.getOrElse(prefs.getInt("screen_orientation", 0)) { ScreenOrientation.SYSTEM }
+
+    fun setScreenOrientation(orientation: ScreenOrientation) {
+        prefs.edit().putInt("screen_orientation", orientation.ordinal).apply()
+    }
 }
 
 enum class Scaling {
@@ -75,4 +83,10 @@ enum class AppLanguage(val tag: String?) {
     SYSTEM(null),
     CHINESE("zh"),
     ENGLISH("en"),
+}
+
+enum class ScreenOrientation(val activityValue: Int) {
+    SYSTEM(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED),
+    PORTRAIT(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
+    LANDSCAPE(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
 }

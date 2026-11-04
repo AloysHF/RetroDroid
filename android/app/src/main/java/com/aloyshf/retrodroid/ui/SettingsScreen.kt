@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -40,6 +41,7 @@ import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.AppLanguage
 import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Prefs
+import com.aloyshf.retrodroid.data.ScreenOrientation
 import com.aloyshf.retrodroid.data.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +58,8 @@ fun SettingsScreen(
     var themeDialog by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf(prefs.language()) }
     var languageDialog by remember { mutableStateOf(false) }
+    var orientation by remember { mutableStateOf(prefs.screenOrientation()) }
+    var orientationDialog by remember { mutableStateOf(false) }
 
     BackHandler(onBack = onBack)
 
@@ -118,6 +122,26 @@ fun SettingsScreen(
         )
     }
 
+    if (orientationDialog) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_orientation),
+            choices = ScreenOrientation.entries.map { option ->
+                Choice(
+                    value = option,
+                    label = stringResource(orientationLabel(option)),
+                    selected = option == orientation,
+                )
+            },
+            onSelect = { option ->
+                orientation = option
+                prefs.setScreenOrientation(option)
+                context.findActivity()?.requestedOrientation = option.activityValue
+                orientationDialog = false
+            },
+            onDismiss = { orientationDialog = false },
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -156,6 +180,16 @@ fun SettingsScreen(
                     summary = stringResource(R.string.settings_theme_summary),
                     value = stringResource(themeLabel(themeMode)),
                     onClick = { themeDialog = true },
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                SettingRow(
+                    title = stringResource(R.string.settings_orientation),
+                    summary = stringResource(R.string.settings_orientation_summary),
+                    value = stringResource(orientationLabel(orientation)),
+                    onClick = { orientationDialog = true },
                 )
             }
 
@@ -279,4 +313,10 @@ private fun languageLabel(language: AppLanguage): Int = when (language) {
     AppLanguage.SYSTEM -> R.string.settings_language_system
     AppLanguage.CHINESE -> R.string.settings_language_chinese
     AppLanguage.ENGLISH -> R.string.settings_language_english
+}
+
+private fun orientationLabel(orientation: ScreenOrientation): Int = when (orientation) {
+    ScreenOrientation.SYSTEM -> R.string.settings_orientation_system
+    ScreenOrientation.PORTRAIT -> R.string.settings_orientation_portrait
+    ScreenOrientation.LANDSCAPE -> R.string.settings_orientation_landscape
 }

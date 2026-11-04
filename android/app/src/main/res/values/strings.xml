@@ -93,6 +93,11 @@
     <string name="settings_theme_system">Follow system</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
+    <string name="settings_orientation">Screen orientation</string>
+    <string name="settings_orientation_summary">Lock the app to portrait or landscape</string>
+    <string name="settings_orientation_system">Follow system</string>
+    <string name="settings_orientation_portrait">Portrait</string>
+    <string name="settings_orientation_landscape">Landscape</string>
     <string name="settings_section_general">General</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_summary">App display language</string>
