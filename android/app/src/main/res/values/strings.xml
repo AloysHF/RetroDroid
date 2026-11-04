@@ -99,12 +99,12 @@
     <string name="settings_orientation_portrait">Portrait</string>
     <string name="settings_orientation_landscape">Landscape</string>
     <string name="settings_section_general">General</string>
+    <string name="settings_section_support">Support</string>
     <string name="settings_language">Language</string>
     <string name="settings_language_summary">App display language</string>
     <string name="settings_language_system">Follow system</string>
     <string name="settings_language_chinese">简体中文</string>
     <string name="settings_language_english">English</string>
-    <string name="settings_section_about">About</string>
 
     <string name="about_title">About RetroDroid</string>
     <string name="about_version">Version %1$s (%2$d)</string>
@@ -117,4 +117,31 @@
     <string name="about_license_cores">Bundled emulator cores keep their own licenses (BSD-3-Clause or GPL-3.0).</string>
     <string name="about_source">View source code on GitHub</string>
     <string name="about_section_legal">Legal</string>
+
+    <string name="help_title">Help</string>
+    <string name="help_summary">How to add games and firmware</string>
+    <string name="help_intro">RetroDroid reads a single library folder on shared storage. This page explains how games and firmware are laid out so the app can find them.</string>
+    <string name="help_section_setup">Library setup</string>
+    <string name="help_setup_access">Grant “All files access” when the app asks, otherwise the library cannot be read.</string>
+    <string name="help_setup_structure">The folder layout is fixed: one folder per system for games, and one for the firmware that system needs.</string>
+    <string name="help_setup_tree">ROMs/&lt;system&gt;/ — games\nBIOS/&lt;system&gt;/&lt;model&gt;/ — firmware</string>
+    <string name="help_setup_refresh">After copying files, open the system and tap Refresh. Game counts on the home screen update when you return.</string>
+    <string name="help_section_games">Adding games</string>
+    <string name="help_games_intro">Copy each system’s games into its own folder. Only the extensions listed below are scanned, regardless of case; some systems also accept .zip packages.</string>
+    <string name="help_formats">Formats: %1$s</string>
+    <string name="help_games_subfolders">Subfolders are scanned too and appear as folders in the game list. Files whose names start with a dot are ignored.</string>
+    <string name="help_games_companions">Keep companion data files in the same folder as the game. LavaX programs, for example, load their data from that folder.</string>
+    <string name="help_section_firmware">Adding BIOS and firmware</string>
+    <string name="help_bios_intro">Firmware belongs in BIOS/&lt;system&gt;/. Keep the exact file names and subfolders shown below — matches are case-sensitive.</string>
+    <string name="help_bios_import">The quickest route is to open the system and tap Import firmware, then pick the files. You can also copy them manually; they are picked up on refresh.</string>
+    <string name="help_bios_flagged">The home screen flags systems whose required firmware is missing, and the system page lists what every machine model needs.</string>
+    <string name="help_optional_suffix"> (optional)</string>
+    <string name="help_section_firmware_only">Firmware-only systems</string>
+    <string name="help_firmware_only_body">These systems have no game content: copy the dumps of the model you want, pick that model on the system page, then tap Start firmware.</string>
+    <string name="help_section_playing">Playing</string>
+    <string name="help_playing_body">Tap a game to start it. Press Back for the pause menu, where you can save and load states, reset, open core options (rotation, scaling) and exit. On-screen buttons mirror the original controls; dictionary systems use an on-screen keyboard.</string>
+    <string name="help_section_trouble">Troubleshooting</string>
+    <string name="help_trouble_game">A game does not appear — check its extension and that it sits under the right ROMs/&lt;system&gt; folder, then tap Refresh.</string>
+    <string name="help_trouble_firmware">Firmware is not detected — compare file names and folder spelling letter by letter, then tap Refresh or restart the app.</string>
+    <string name="help_trouble_access">Nothing is found at all — grant All files access on the home screen card.</string>
 </resources>
