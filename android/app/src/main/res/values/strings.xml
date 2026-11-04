@@ -80,4 +80,11 @@
     <string name="cancel">Cancel</string>
     <string name="confirm">OK</string>
     <string name="core_label">Core: %1$s</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_library">Game library</string>
+    <string name="settings_game_layout">Game layout</string>
+    <string name="settings_game_layout_summary">How games are arranged inside a system</string>
+    <string name="settings_layout_list">List</string>
+    <string name="settings_layout_grid">Grid</string>
 </resources>

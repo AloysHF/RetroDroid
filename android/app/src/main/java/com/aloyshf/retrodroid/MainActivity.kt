@@ -33,6 +33,7 @@ import com.aloyshf.retrodroid.ui.HomeScreen
 import com.aloyshf.retrodroid.ui.LibrarySetupScreen
 import com.aloyshf.retrodroid.ui.OnResume
 import com.aloyshf.retrodroid.ui.RetroDroidTheme
+import com.aloyshf.retrodroid.ui.SettingsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -59,6 +60,8 @@ class MainActivity : ComponentActivity() {
 
 sealed interface Screen {
     data object Home : Screen
+
+    data object Settings : Screen
 
     /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
     data class Games(val system: SystemInfo, val folder: String = "") : Screen
@@ -114,6 +117,11 @@ private fun App() {
             access = access,
             onRequestAccess = { skipped = false },
             onOpenSystem = { screen = Screen.Games(it) },
+            onOpenSettings = { screen = Screen.Settings },
+        )
+
+        Screen.Settings -> SettingsScreen(
+            onBack = { screen = Screen.Home },
         )
 
         is Screen.Games -> GameListScreen(

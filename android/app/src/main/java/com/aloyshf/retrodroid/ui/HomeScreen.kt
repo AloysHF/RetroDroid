@@ -77,6 +77,7 @@ fun HomeScreen(
     access: Boolean,
     onRequestAccess: () -> Unit,
     onOpenSystem: (SystemInfo) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val language = Locale.getDefault().language
@@ -123,6 +124,11 @@ fun HomeScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
+                actions = {
+                    TextButton(onClick = onOpenSettings) {
+                        Text(stringResource(R.string.settings_title))
+                    }
+                },
             )
         },
     ) { padding ->

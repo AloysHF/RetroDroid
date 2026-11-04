@@ -31,10 +31,22 @@ class Prefs(context: Context) {
     fun setScaling(systemId: String, scaling: Scaling) {
         prefs.edit().putInt("scaling_$systemId", scaling.ordinal).apply()
     }
+
+    fun gameLayout(): GameLayout =
+        GameLayout.entries.getOrElse(prefs.getInt("game_layout", 0)) { GameLayout.LIST }
+
+    fun setGameLayout(layout: GameLayout) {
+        prefs.edit().putInt("game_layout", layout.ordinal).apply()
+    }
 }
 
 enum class Scaling {
     FIT,
     STRETCH,
     INTEGER,
+}
+
+enum class GameLayout {
+    LIST,
+    GRID,
 }

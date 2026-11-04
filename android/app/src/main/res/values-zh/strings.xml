@@ -80,4 +80,11 @@
     <string name="cancel">取消</string>
     <string name="confirm">确定</string>
     <string name="core_label">核心：%1$s</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_section_library">游戏库</string>
+    <string name="settings_game_layout">游戏排列方式</string>
+    <string name="settings_game_layout_summary">游戏在系统内的展示方式</string>
+    <string name="settings_layout_list">列表</string>
+    <string name="settings_layout_grid">网格</string>
 </resources>
