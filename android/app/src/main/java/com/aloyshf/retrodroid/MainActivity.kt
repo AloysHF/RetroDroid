@@ -30,6 +30,7 @@ import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.ThemeMode
 import com.aloyshf.retrodroid.model.Registry
 import com.aloyshf.retrodroid.model.SystemInfo
+import com.aloyshf.retrodroid.ui.AboutScreen
 import com.aloyshf.retrodroid.ui.EmulationScreen
 import com.aloyshf.retrodroid.ui.GameListScreen
 import com.aloyshf.retrodroid.ui.HomeScreen
@@ -77,6 +78,8 @@ sealed interface Screen {
     data object Home : Screen
 
     data object Settings : Screen
+
+    data object About : Screen
 
     /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
     data class Games(val system: SystemInfo, val folder: String = "") : Screen
@@ -138,7 +141,12 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
         Screen.Settings -> SettingsScreen(
             themeMode = themeMode,
             onThemeModeChange = onThemeModeChange,
+            onOpenAbout = { screen = Screen.About },
             onBack = { screen = Screen.Home },
+        )
+
+        Screen.About -> AboutScreen(
+            onBack = { screen = Screen.Settings },
         )
 
         is Screen.Games -> GameListScreen(

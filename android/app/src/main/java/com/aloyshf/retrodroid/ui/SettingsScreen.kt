@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.aloyshf.retrodroid.BuildConfig
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.AppLanguage
 import com.aloyshf.retrodroid.data.GameLayout
@@ -49,6 +50,7 @@ import com.aloyshf.retrodroid.data.ThemeMode
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onOpenAbout: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -199,6 +201,15 @@ fun SettingsScreen(
                     summary = stringResource(R.string.settings_language_summary),
                     value = stringResource(languageLabel(language)),
                     onClick = { languageDialog = true },
+                )
+            }
+
+            SettingsSection(stringResource(R.string.settings_section_about)) {
+                SettingRow(
+                    title = stringResource(R.string.about_title),
+                    summary = stringResource(R.string.about_summary),
+                    value = BuildConfig.VERSION_NAME,
+                    onClick = onOpenAbout,
                 )
             }
         }
