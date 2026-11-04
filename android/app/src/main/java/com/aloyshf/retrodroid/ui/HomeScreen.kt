@@ -1,5 +1,6 @@
 package com.aloyshf.retrodroid.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -53,6 +56,18 @@ import java.util.Locale
 private data class SystemRowState(
     val count: Int?,
     val firmwareMissing: Boolean,
+)
+
+private val systemLogos = mapOf(
+    "native32" to R.drawable.logo_native32,
+    "coolbar" to R.drawable.logo_coolbar,
+    "dingoo" to R.drawable.logo_dingoo,
+    "hyperscan" to R.drawable.logo_hyperscan,
+    "lavax" to R.drawable.logo_lavax,
+    "playdia" to R.drawable.logo_playdia,
+    "spmp8000" to R.drawable.logo_spmp8000,
+    "wqx" to R.drawable.logo_wqx,
+    "bbk" to R.drawable.logo_bbk,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -206,18 +221,31 @@ private fun SystemCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
+                modifier = Modifier.size(54.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    system.shortName.take(2).uppercase(),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
                 )
+                val logo = systemLogos[system.id]
+                if (logo != null) {
+                    Image(
+                        painter = painterResource(logo),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    Text(
+                        system.shortName.take(2).uppercase(),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
