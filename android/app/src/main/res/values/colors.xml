@@ -3,4 +3,5 @@
     <color name="background">#FF0F1014</color>
     <color name="surface">#FF1A1C22</color>
     <color name="accent">#FF5EE1B4</color>
+    <color name="ic_launcher_background">#FF000000</color>
 </resources>
