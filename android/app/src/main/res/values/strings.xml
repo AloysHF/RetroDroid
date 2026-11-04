@@ -118,6 +118,21 @@
     <string name="about_source">View source code on GitHub</string>
     <string name="about_section_legal">Legal</string>
 
+    <string name="settings_section_updates">Updates</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_check_summary">Installed version %1$s</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_auto">Check automatically</string>
+    <string name="update_auto_summary">Once a day when the app opens</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_body">RetroDroid %1$s is available. You are on %2$s.</string>
+    <string name="update_view">View release</string>
+    <string name="update_later">Later</string>
+    <string name="update_latest_title">Up to date</string>
+    <string name="update_latest_body">RetroDroid %1$s is the latest version.</string>
+    <string name="update_failed_title">Could not check for updates</string>
+    <string name="update_failed_body">Check your network connection and try again.</string>
+
     <string name="help_title">Help</string>
     <string name="help_summary">How to add games and firmware</string>
     <string name="help_intro">RetroDroid reads a single library folder on shared storage. This page explains how games and firmware are laid out so the app can find them.</string>
