@@ -24,7 +24,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.Library
+import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
+import com.aloyshf.retrodroid.data.ThemeMode
 import com.aloyshf.retrodroid.model.Registry
 import com.aloyshf.retrodroid.model.SystemInfo
 import com.aloyshf.retrodroid.ui.EmulationScreen
@@ -41,7 +43,8 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // The app is always dark, so the system bars always need light icons.
+        val prefs = Prefs(this)
+        // Transparent bars; their icon colour follows the app theme.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
@@ -49,9 +52,16 @@ class MainActivity : ComponentActivity() {
         NativeCore.nativeInit()
         NativeCore.nativeSetLanguage(if (Locale.getDefault().language.startsWith("zh")) 12 else 0)
         setContent {
-            RetroDroidTheme {
+            var themeMode by remember { mutableStateOf(prefs.themeMode()) }
+            RetroDroidTheme(themeMode) {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    App()
+                    App(
+                        themeMode = themeMode,
+                        onThemeModeChange = { mode ->
+                            prefs.setThemeMode(mode)
+                            themeMode = mode
+                        },
+                    )
                 }
             }
         }
@@ -70,7 +80,7 @@ sealed interface Screen {
 }
 
 @Composable
-private fun App() {
+private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     val context = LocalContext.current
     val systems = remember { Registry.load(context) }
     var access by remember { mutableStateOf(Library.hasAccess(context)) }
@@ -121,6 +131,8 @@ private fun App() {
         )
 
         Screen.Settings -> SettingsScreen(
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange,
             onBack = { screen = Screen.Home },
         )
 

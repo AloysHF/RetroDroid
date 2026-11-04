@@ -38,6 +38,13 @@ class Prefs(context: Context) {
     fun setGameLayout(layout: GameLayout) {
         prefs.edit().putInt("game_layout", layout.ordinal).apply()
     }
+
+    fun themeMode(): ThemeMode =
+        ThemeMode.entries.getOrElse(prefs.getInt("theme_mode", ThemeMode.DARK.ordinal)) { ThemeMode.DARK }
+
+    fun setThemeMode(mode: ThemeMode) {
+        prefs.edit().putInt("theme_mode", mode.ordinal).apply()
+    }
 }
 
 enum class Scaling {
@@ -49,4 +56,10 @@ enum class Scaling {
 enum class GameLayout {
     LIST,
     GRID,
+}
+
+enum class ThemeMode {
+    SYSTEM,
+    DARK,
+    LIGHT,
 }

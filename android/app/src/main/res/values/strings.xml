@@ -87,4 +87,10 @@
     <string name="settings_game_layout_summary">How games are arranged inside a system</string>
     <string name="settings_layout_list">List</string>
     <string name="settings_layout_grid">Grid</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_summary">App color scheme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_light">Light</string>
 </resources>

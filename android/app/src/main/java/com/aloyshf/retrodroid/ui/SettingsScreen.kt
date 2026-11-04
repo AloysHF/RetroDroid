@@ -39,14 +39,20 @@ import androidx.compose.ui.unit.dp
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Prefs
+import com.aloyshf.retrodroid.data.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onBack: () -> Unit,
+) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     var layout by remember { mutableStateOf(prefs.gameLayout()) }
     var layoutDialog by remember { mutableStateOf(false) }
+    var themeDialog by remember { mutableStateOf(false) }
 
     BackHandler(onBack = onBack)
 
@@ -66,6 +72,24 @@ fun SettingsScreen(onBack: () -> Unit) {
                 layoutDialog = false
             },
             onDismiss = { layoutDialog = false },
+        )
+    }
+
+    if (themeDialog) {
+        ChoiceDialog(
+            title = stringResource(R.string.settings_theme),
+            choices = ThemeMode.entries.map { option ->
+                Choice(
+                    value = option,
+                    label = stringResource(themeLabel(option)),
+                    selected = option == themeMode,
+                )
+            },
+            onSelect = { option ->
+                onThemeModeChange(option)
+                themeDialog = false
+            },
+            onDismiss = { themeDialog = false },
         )
     }
 
@@ -98,6 +122,15 @@ fun SettingsScreen(onBack: () -> Unit) {
                     summary = stringResource(R.string.settings_game_layout_summary),
                     value = stringResource(layoutLabel(layout)),
                     onClick = { layoutDialog = true },
+                )
+            }
+
+            SettingsSection(stringResource(R.string.settings_section_display)) {
+                SettingRow(
+                    title = stringResource(R.string.settings_theme),
+                    summary = stringResource(R.string.settings_theme_summary),
+                    value = stringResource(themeLabel(themeMode)),
+                    onClick = { themeDialog = true },
                 )
             }
         }
@@ -200,4 +233,10 @@ private fun SettingRow(
 private fun layoutLabel(layout: GameLayout): Int = when (layout) {
     GameLayout.LIST -> R.string.settings_layout_list
     GameLayout.GRID -> R.string.settings_layout_grid
+}
+
+private fun themeLabel(mode: ThemeMode): Int = when (mode) {
+    ThemeMode.SYSTEM -> R.string.settings_theme_system
+    ThemeMode.DARK -> R.string.settings_theme_dark
+    ThemeMode.LIGHT -> R.string.settings_theme_light
 }
