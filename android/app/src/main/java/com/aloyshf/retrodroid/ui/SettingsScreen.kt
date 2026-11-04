@@ -50,6 +50,7 @@ import com.aloyshf.retrodroid.data.ThemeMode
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -204,7 +205,17 @@ fun SettingsScreen(
                 )
             }
 
-            SettingsSection(stringResource(R.string.settings_section_about)) {
+            SettingsSection(stringResource(R.string.settings_section_support)) {
+                SettingRow(
+                    title = stringResource(R.string.help_title),
+                    summary = stringResource(R.string.help_summary),
+                    value = "",
+                    onClick = onOpenHelp,
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
                 SettingRow(
                     title = stringResource(R.string.about_title),
                     summary = stringResource(R.string.about_summary),

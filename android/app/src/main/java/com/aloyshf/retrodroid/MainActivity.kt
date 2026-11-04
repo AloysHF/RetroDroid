@@ -33,6 +33,7 @@ import com.aloyshf.retrodroid.model.SystemInfo
 import com.aloyshf.retrodroid.ui.AboutScreen
 import com.aloyshf.retrodroid.ui.EmulationScreen
 import com.aloyshf.retrodroid.ui.GameListScreen
+import com.aloyshf.retrodroid.ui.HelpScreen
 import com.aloyshf.retrodroid.ui.HomeScreen
 import com.aloyshf.retrodroid.ui.LibrarySetupScreen
 import com.aloyshf.retrodroid.ui.OnResume
@@ -80,6 +81,9 @@ sealed interface Screen {
     data object Settings : Screen
 
     data object About : Screen
+
+    /** Help returns to the screen it was opened from. */
+    data class Help(val fromSettings: Boolean = false) : Screen
 
     /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
     data class Games(val system: SystemInfo, val folder: String = "") : Screen
@@ -135,18 +139,25 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
             access = access,
             onRequestAccess = { skipped = false },
             onOpenSystem = { screen = Screen.Games(it) },
+            onOpenHelp = { screen = Screen.Help() },
             onOpenSettings = { screen = Screen.Settings },
         )
 
         Screen.Settings -> SettingsScreen(
             themeMode = themeMode,
             onThemeModeChange = onThemeModeChange,
+            onOpenHelp = { screen = Screen.Help(fromSettings = true) },
             onOpenAbout = { screen = Screen.About },
             onBack = { screen = Screen.Home },
         )
 
         Screen.About -> AboutScreen(
             onBack = { screen = Screen.Settings },
+        )
+
+        is Screen.Help -> HelpScreen(
+            systems = systems,
+            onBack = { screen = if (current.fromSettings) Screen.Settings else Screen.Home },
         )
 
         is Screen.Games -> GameListScreen(

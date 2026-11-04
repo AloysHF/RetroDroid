@@ -77,6 +77,7 @@ fun HomeScreen(
     access: Boolean,
     onRequestAccess: () -> Unit,
     onOpenSystem: (SystemInfo) -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -148,7 +149,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                LibraryCard(access = access, onRequestAccess = onRequestAccess)
+                LibraryCard(access = access, onRequestAccess = onRequestAccess, onOpenHelp = onOpenHelp)
             }
             items(systems, key = { it.id }) { system ->
                 val row = rows[system.id]
@@ -175,7 +176,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun LibraryCard(access: Boolean, onRequestAccess: () -> Unit) {
+private fun LibraryCard(access: Boolean, onRequestAccess: () -> Unit, onOpenHelp: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = if (access) {
@@ -199,9 +200,14 @@ private fun LibraryCard(access: Boolean, onRequestAccess: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (!access) {
-                TextButton(onClick = onRequestAccess, contentPadding = PaddingValues(0.dp)) {
-                    Text(stringResource(R.string.library_grant))
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (!access) {
+                    TextButton(onClick = onRequestAccess, contentPadding = PaddingValues(0.dp)) {
+                        Text(stringResource(R.string.library_grant))
+                    }
+                }
+                TextButton(onClick = onOpenHelp, contentPadding = PaddingValues(0.dp)) {
+                    Text(stringResource(R.string.help_summary))
                 }
             }
         }
