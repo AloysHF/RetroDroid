@@ -42,7 +42,7 @@ jobs:
           TOOLS="$(ls -d "$SDK"/cmdline-tools/*/bin | head -1)"
           yes | "$TOOLS/sdkmanager" --licenses > /dev/null || true
           "$TOOLS/sdkmanager" --install \
-            "platforms;android-34" "build-tools;34.0.0" "ndk;27.2.12479018" > /dev/null
+            "platforms;android-37.0" "build-tools;36.0.0" "ndk;27.2.12479018" > /dev/null
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
