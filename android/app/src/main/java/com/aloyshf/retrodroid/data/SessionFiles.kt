@@ -20,11 +20,19 @@ object SessionFiles {
     fun statesDir(context: Context, core: String): File =
         File(root(context), "states/$core").apply { mkdirs() }
 
-    fun stateFile(context: Context, core: String, gameName: String, gameUri: Uri): File {
+    /** Per-game folder holding the manual slots, the automatic slot and previews. */
+    fun gameStatesDir(context: Context, core: String, gameName: String, gameUri: Uri): File =
+        File(statesDir(context, core), gameKey(gameName, gameUri)).apply { mkdirs() }
+
+    /** Retired single-state file, migrated into the automatic slot on first use. */
+    fun legacyStateFile(context: Context, core: String, gameName: String, gameUri: Uri): File =
+        File(statesDir(context, core), gameKey(gameName, gameUri) + ".state")
+
+    private fun gameKey(gameName: String, gameUri: Uri): String {
         val base = gameName.substringBeforeLast('.').ifBlank { gameName }
         val safe = sanitize(base)
         val hash = gameUri.toString().hashCode().toUInt().toString(16)
-        return File(statesDir(context, core), "$safe-$hash.state")
+        return "$safe-$hash"
     }
 
     private fun sanitize(name: String): String {

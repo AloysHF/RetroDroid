@@ -42,6 +42,24 @@ pub fn output_size() -> (usize, usize) {
     (state.width, state.height)
 }
 
+/// Snapshot of the most recent frame as opaque ARGB pixels, ready for
+/// `Bitmap.createBitmap`. Returns `None` before the core has produced video.
+pub fn frame_argb() -> Option<(usize, usize, Vec<u32>)> {
+    let state = lock(video());
+    if state.width == 0 || state.height == 0 {
+        return None;
+    }
+    let pixel_count = state.width.checked_mul(state.height)?;
+    if state.pixels.len() < pixel_count {
+        return None;
+    }
+    let pixels = state.pixels[..pixel_count]
+        .iter()
+        .map(|&pixel| blit::rgb565_to_argb(pixel))
+        .collect();
+    Some((state.width, state.height, pixels))
+}
+
 pub unsafe extern "C" fn video_refresh(data: *const c_void, width: u32, height: u32, pitch: usize) {
     let (format, rotation) = env::pixel_format_and_rotation();
     let mut state = lock(video());

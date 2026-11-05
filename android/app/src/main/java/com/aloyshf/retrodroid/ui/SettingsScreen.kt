@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +46,7 @@ import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.AppLanguage
 import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Prefs
+import com.aloyshf.retrodroid.data.Scaling
 import com.aloyshf.retrodroid.data.ScreenOrientation
 import com.aloyshf.retrodroid.data.ThemeMode
 import com.aloyshf.retrodroid.data.UpdateChecker
@@ -58,12 +61,19 @@ fun SettingsScreen(
     onOpenHelp: () -> Unit,
     onOpenAbout: () -> Unit,
     onBack: () -> Unit,
+    embedded: Boolean = false,
+    inGame: Boolean = false,
+    rotation: Int = 0,
+    onRotationChange: ((Int) -> Unit)? = null,
+    scaling: Scaling = Scaling.FIT,
+    onScalingChange: ((Scaling) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     var layout by remember { mutableStateOf(prefs.gameLayout()) }
     var layoutDialog by remember { mutableStateOf(false) }
     var themeDialog by remember { mutableStateOf(false) }
+    var scalingDialog by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf(prefs.language()) }
     var languageDialog by remember { mutableStateOf(false) }
     var orientation by remember { mutableStateOf(prefs.screenOrientation()) }
@@ -197,29 +207,26 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-        ) {
+    if (scalingDialog) {
+        ChoiceDialog(
+            title = stringResource(R.string.scaling),
+            choices = Scaling.entries.map { option ->
+                Choice(
+                    value = option,
+                    label = stringResource(scalingLabel(option)),
+                    selected = option == scaling,
+                )
+            },
+            onSelect = { option ->
+                scalingDialog = false
+                onScalingChange?.invoke(option)
+            },
+            onDismiss = { scalingDialog = false },
+        )
+    }
+
+    val sections: @Composable ColumnScope.() -> Unit = {
+        if (!inGame) {
             SettingsSection(stringResource(R.string.settings_section_library)) {
                 SettingRow(
                     title = stringResource(R.string.settings_game_layout),
@@ -228,26 +235,52 @@ fun SettingsScreen(
                     onClick = { layoutDialog = true },
                 )
             }
+        }
 
-            SettingsSection(stringResource(R.string.settings_section_display)) {
+        SettingsSection(stringResource(R.string.settings_section_display)) {
+            if (inGame && onRotationChange != null) {
                 SettingRow(
-                    title = stringResource(R.string.settings_theme),
-                    summary = stringResource(R.string.settings_theme_summary),
-                    value = stringResource(themeLabel(themeMode)),
-                    onClick = { themeDialog = true },
+                    title = stringResource(R.string.rotation),
+                    summary = stringResource(R.string.settings_rotation_summary),
+                    value = "$rotation°",
+                    onClick = { onRotationChange((rotation + 90) % 360) },
                 )
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
+            }
+            if (inGame && onScalingChange != null) {
                 SettingRow(
-                    title = stringResource(R.string.settings_orientation),
-                    summary = stringResource(R.string.settings_orientation_summary),
-                    value = stringResource(orientationLabel(orientation)),
-                    onClick = { orientationDialog = true },
+                    title = stringResource(R.string.scaling),
+                    summary = stringResource(R.string.settings_scaling_summary),
+                    value = stringResource(scalingLabel(scaling)),
+                    onClick = { scalingDialog = true },
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
+            SettingRow(
+                title = stringResource(R.string.settings_theme),
+                summary = stringResource(R.string.settings_theme_summary),
+                value = stringResource(themeLabel(themeMode)),
+                onClick = { themeDialog = true },
+            )
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            SettingRow(
+                title = stringResource(R.string.settings_orientation),
+                summary = stringResource(R.string.settings_orientation_summary),
+                value = stringResource(orientationLabel(orientation)),
+                onClick = { orientationDialog = true },
+            )
+        }
 
+        if (!inGame) {
             SettingsSection(stringResource(R.string.settings_section_general)) {
                 SettingRow(
                     title = stringResource(R.string.settings_language),
@@ -298,6 +331,59 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (embedded) {
+        Surface(
+            color = MaterialTheme.colorScheme.background,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text("←", style = MaterialTheme.typography.titleLarge)
+                    }
+                    Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge)
+                }
+                sections()
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+        return
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    TextButton(onClick = onBack) {
+                        Text("←", style = MaterialTheme.typography.titleLarge)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            content = sections,
+        )
     }
 }
 
@@ -448,4 +534,10 @@ private fun orientationLabel(orientation: ScreenOrientation): Int = when (orient
     ScreenOrientation.SYSTEM -> R.string.settings_orientation_system
     ScreenOrientation.PORTRAIT -> R.string.settings_orientation_portrait
     ScreenOrientation.LANDSCAPE -> R.string.settings_orientation_landscape
+}
+
+private fun scalingLabel(scaling: Scaling): Int = when (scaling) {
+    Scaling.FIT -> R.string.scaling_fit
+    Scaling.STRETCH -> R.string.scaling_stretch
+    Scaling.INTEGER -> R.string.scaling_integer
 }

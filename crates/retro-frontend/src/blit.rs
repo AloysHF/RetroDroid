@@ -82,6 +82,18 @@ fn expand_1555(v: u16) -> u16 {
     (r << 11) | (((g << 1) | (g >> 4)) << 5) | b
 }
 
+/// Expand one packed RGB565 pixel into the opaque ARGB word Android bitmaps
+/// expect.
+pub fn rgb565_to_argb(pixel: u16) -> u32 {
+    let r = ((pixel >> 11) & 0x1f) as u32;
+    let g = ((pixel >> 5) & 0x3f) as u32;
+    let b = (pixel & 0x1f) as u32;
+    let r = (r << 3) | (r >> 2);
+    let g = (g << 2) | (g >> 4);
+    let b = (b << 3) | (b >> 2);
+    0xff00_0000 | (r << 16) | (g << 8) | b
+}
+
 /// Copy packed RGB565 into an `ANativeWindow` buffer, scaling nearest-neighbour
 /// if the buffer size does not match (for example while a surface is being
 /// recreated).
@@ -198,6 +210,14 @@ mod tests {
         let (w, h) = convert_frame(&[0u8; 4], 4, 4, 8, PixelFormat::Rgb565, 0, &mut out);
         assert_eq!((w, h), (4, 4));
         assert!(out.iter().all(|&p| p == 0));
+    }
+
+    #[test]
+    fn argb_expansion() {
+        assert_eq!(rgb565_to_argb(rgb565(255, 0, 0)), 0xffff_0000);
+        assert_eq!(rgb565_to_argb(rgb565(0, 255, 0)), 0xff00_ff00);
+        assert_eq!(rgb565_to_argb(rgb565(0, 0, 255)), 0xff00_00ff);
+        assert_eq!(rgb565_to_argb(0), 0xff00_0000);
     }
 
     #[test]

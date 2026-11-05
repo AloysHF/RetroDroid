@@ -183,6 +183,8 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
         is Screen.Play -> EmulationScreen(
             system = current.system,
             game = current.game,
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange,
             onExit = { screen = Screen.Games(current.system, current.folder) },
         )
     }

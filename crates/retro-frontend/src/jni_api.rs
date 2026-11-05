@@ -238,6 +238,33 @@ pub extern "system" fn Java_com_aloyshf_retrodroid_core_NativeCore_nativeOutputS
     })
 }
 
+/// Returns `[width, height, argb...]` for the latest frame, or null when the
+/// core has not produced video yet.
+#[no_mangle]
+pub extern "system" fn Java_com_aloyshf_retrodroid_core_NativeCore_nativeFrameArgb(
+    mut env: EnvUnowned,
+    _class: JClass,
+) -> jni::sys::jintArray {
+    with_env(&mut env, |env| {
+        let Some((width, height, pixels)) = video::frame_argb() else {
+            return std::ptr::null_mut();
+        };
+        let length = pixels.len() + 2;
+        let Ok(array) = env.new_int_array(length) else {
+            return std::ptr::null_mut();
+        };
+        let mut values = Vec::with_capacity(length);
+        values.push(width as i32);
+        values.push(height as i32);
+        values.extend(pixels.into_iter().map(|pixel| pixel as i32));
+        if env.set_int_array_region(&array, 0, &values).is_ok() {
+            array.into_raw()
+        } else {
+            std::ptr::null_mut()
+        }
+    })
+}
+
 #[no_mangle]
 pub extern "system" fn Java_com_aloyshf_retrodroid_core_NativeCore_nativeSetButtons(
     _env: EnvUnowned,

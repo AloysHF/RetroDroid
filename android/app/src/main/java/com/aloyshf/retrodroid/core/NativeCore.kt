@@ -34,6 +34,9 @@ object NativeCore {
     external fun nativeAvInfo(): IntArray
     external fun nativeOutputSize(): IntArray
 
+    /** `[width, height, argb...]` for the latest frame, or null before video starts. */
+    external fun nativeFrameArgb(): IntArray?
+
     external fun nativeSetButtons(mask: Int)
     external fun nativeSetKey(androidKeycode: Int, down: Boolean)
 
