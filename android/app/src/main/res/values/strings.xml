@@ -17,6 +17,20 @@
     <string name="scanning">Scanning…</string>
     <string name="system_extensions">Supported files: %1$s</string>
     <string name="games_title">%1$s games</string>
+    <string name="game_search">Search games</string>
+    <string name="game_sort">Sort</string>
+    <string name="sort_name">Title</string>
+    <string name="sort_recent">Recently played</string>
+    <string name="sort_play_time">Play time</string>
+    <string name="sort_size">File size</string>
+    <string name="no_search_results">No games match “%1$s”.</string>
+    <string name="play_time_hours">%1$d h %2$d min</string>
+    <string name="play_time_minutes">%1$d min</string>
+    <string name="play_time_less_minute">&lt;1 min</string>
+    <string name="just_now">Just now</string>
+    <string name="minutes_ago">%1$d min ago</string>
+    <string name="hours_ago">%1$d h ago</string>
+    <string name="days_ago">%1$d d ago</string>
 
     <string name="library_title">Game library</string>
     <string name="library_grant">Grant file access</string>
