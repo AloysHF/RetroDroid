@@ -117,8 +117,10 @@ there is nothing to pick on every launch:
 3. Select a game to start it. WQX has no game content: every supported model is
    listed on its own row with the folder its dumps belong to and whether that
    firmware is present, so pick the model and press **Start firmware**. The
-   pause menu offers save states, core options, scaling and screen rotation;
-   the back gesture returns to the game list.
+   pause menu offers five save slots with previews, screenshots, embedded
+   settings (theme, orientation, rotation and scaling), core options and exit.
+   Leaving a game writes an automatic save; the next launch offers to continue
+   from it. The back gesture returns to the game list.
 
 Games are opened in place from the library. Folders below `ROMs/<system>/` are
 listed before the games of the current folder and open one level at a time, so

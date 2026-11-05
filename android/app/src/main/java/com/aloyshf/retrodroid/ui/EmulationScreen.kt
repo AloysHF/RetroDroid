@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,8 +61,12 @@ import com.aloyshf.retrodroid.core.NativeCore
 import com.aloyshf.retrodroid.data.PlayStats
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
+import com.aloyshf.retrodroid.data.SaveSlot
+import com.aloyshf.retrodroid.data.SaveStateStore
 import com.aloyshf.retrodroid.data.Scaling
+import com.aloyshf.retrodroid.data.Screenshots
 import com.aloyshf.retrodroid.data.SessionFiles
+import com.aloyshf.retrodroid.data.ThemeMode
 import com.aloyshf.retrodroid.model.CoreOption
 import com.aloyshf.retrodroid.model.CoreOptions
 import com.aloyshf.retrodroid.model.SystemInfo
@@ -75,7 +80,13 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Composable
-fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
+fun EmulationScreen(
+    system: SystemInfo,
+    game: RomEntry?,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onExit: () -> Unit,
+) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val audio = remember { AudioPlayer() }
@@ -86,8 +97,12 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
     var rotation by remember { mutableIntStateOf(prefs.rotation(system)) }
     var scaling by remember { mutableStateOf(prefs.scaling(system.id)) }
     var menuOpen by remember { mutableStateOf(false) }
+    var pausePage by remember { mutableStateOf(PausePage.MAIN) }
     var optionsOpen by remember { mutableStateOf(false) }
     var confirmExit by remember { mutableStateOf(false) }
+    var resumePrompt by remember { mutableStateOf(false) }
+    var pendingAutoLoad by remember { mutableStateOf(false) }
+    var slotsVersion by remember { mutableIntStateOf(0) }
     var keyboardOpen by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -95,7 +110,6 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
     var surface by remember { mutableStateOf<android.view.Surface?>(null) }
     var started by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var stateExists by remember { mutableStateOf(false) }
 
     val loadFailedMessage = stringResource(R.string.load_failed)
     val savedMessage = stringResource(R.string.state_saved)
@@ -103,13 +117,13 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
     val saveFailedMessage = stringResource(R.string.state_save_failed)
     val loadStateFailedMessage = stringResource(R.string.state_load_failed)
     val noStateMessage = stringResource(R.string.no_state)
-    val stateFile = remember(game?.uri) {
-        SessionFiles.stateFile(
-            context,
-            system.core,
-            game?.name ?: "firmware",
-            game?.uri ?: android.net.Uri.EMPTY,
-        )
+    val deletedMessage = stringResource(R.string.state_deleted)
+    val screenshotSavedMessage = stringResource(R.string.screenshot_saved)
+    val screenshotFailedMessage = stringResource(R.string.screenshot_failed)
+
+    val gameName = game?.name ?: "firmware"
+    val store = remember(game?.uri) {
+        SaveStateStore(context, system.core, gameName, game?.uri ?: android.net.Uri.EMPTY)
     }
 
     LaunchedEffect(Unit) {
@@ -137,7 +151,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
         result.onSuccess { info ->
             video = info
             loaded = true
-            stateExists = stateFile.exists()
+            resumePrompt = store.exists(SaveSlot.AUTO)
         }.onFailure { error ->
             android.util.Log.e("RetroDroid", "load failed", error)
             failed = true
@@ -145,9 +159,9 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
         }
     }
 
-    LaunchedEffect(loaded, surface, started) {
+    LaunchedEffect(loaded, surface, started, resumePrompt) {
         val current = surface ?: return@LaunchedEffect
-        if (!loaded || started) return@LaunchedEffect
+        if (!loaded || started || resumePrompt) return@LaunchedEffect
         if (!NativeCore.nativeStart(current, rotation)) {
             message = loadFailedMessage
             return@LaunchedEffect
@@ -182,8 +196,8 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
         }
     }
 
-    LaunchedEffect(menuOpen, optionsOpen) {
-        NativeCore.nativePause(menuOpen || optionsOpen)
+    LaunchedEffect(menuOpen, optionsOpen, resumePrompt) {
+        NativeCore.nativePause(menuOpen || optionsOpen || resumePrompt)
     }
 
     LaunchedEffect(Unit) {
@@ -219,57 +233,118 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
         when {
             confirmExit -> confirmExit = false
             optionsOpen -> optionsOpen = false
-            else -> menuOpen = true
+            menuOpen && pausePage != PausePage.MAIN -> pausePage = PausePage.MAIN
+            menuOpen -> menuOpen = false
+            else -> {
+                pausePage = PausePage.MAIN
+                menuOpen = true
+            }
         }
     }
 
-    fun saveState() {
+    fun serializeState(): ByteArray? =
+        runCatching { NativeCore.nativeSerialize() }.getOrNull()
+
+    fun saveSlot(slot: SaveSlot) {
         scope.launch {
-            val data = withContext(Dispatchers.IO) {
-                runCatching { NativeCore.nativeSerialize() }.getOrNull()
-            }
+            val data = withContext(Dispatchers.IO) { serializeState() }
             if (data == null) {
                 message = saveFailedMessage
                 return@launch
             }
-            val ok = withContext(Dispatchers.IO) {
-                runCatching { stateFile.writeBytes(data) }.isSuccess
-            }
-            if (ok) {
-                stateExists = true
-                message = savedMessage
-            } else {
-                message = saveFailedMessage
-            }
+            val preview = Screenshots.capture()
+            val ok = withContext(Dispatchers.IO) { store.write(slot, data, preview) }
+            slotsVersion++
+            message = if (ok) savedMessage else saveFailedMessage
         }
     }
 
-    fun loadState() {
-        if (!stateFile.exists()) {
-            message = noStateMessage
-            return
-        }
+    fun loadSlot(slot: SaveSlot) {
         scope.launch {
+            val data = withContext(Dispatchers.IO) { store.read(slot) }
+            if (data == null) {
+                message = noStateMessage
+                return@launch
+            }
             val ok = withContext(Dispatchers.IO) {
-                runCatching { NativeCore.nativeUnserialize(stateFile.readBytes()) }.getOrDefault(false)
+                runCatching { NativeCore.nativeUnserialize(data) }.getOrDefault(false)
             }
             message = if (ok) loadedMessage else loadStateFailedMessage
         }
     }
 
-    fun cycleRotation() {
-        val next = (rotation + 90) % 360
+    fun deleteSlot(slot: SaveSlot) {
+        scope.launch {
+            withContext(Dispatchers.IO) { store.delete(slot) }
+            slotsVersion++
+            message = deletedMessage
+        }
+    }
+
+    fun saveAutoState() {
+        if (!started || resumePrompt) return
+        scope.launch {
+            val data = withContext(Dispatchers.IO) { serializeState() } ?: return@launch
+            val preview = Screenshots.capture()
+            val ok = withContext(Dispatchers.IO) { store.write(SaveSlot.AUTO, data, preview) }
+            if (ok) slotsVersion++
+        }
+    }
+
+    fun exitGame() {
+        scope.launch {
+            if (started && !resumePrompt) {
+                val data = withContext(Dispatchers.IO) { serializeState() }
+                if (data != null) {
+                    val preview = Screenshots.capture()
+                    withContext(Dispatchers.IO) { store.write(SaveSlot.AUTO, data, preview) }
+                }
+            }
+            onExit()
+        }
+    }
+
+    fun takeScreenshot() {
+        scope.launch {
+            val bitmap = Screenshots.capture()
+            if (bitmap == null) {
+                message = screenshotFailedMessage
+                return@launch
+            }
+            val file = withContext(Dispatchers.IO) { Screenshots.save(context, bitmap, gameName) }
+            message = if (file != null) screenshotSavedMessage else screenshotFailedMessage
+        }
+    }
+
+    fun continueFromAuto() {
+        resumePrompt = false
+        pendingAutoLoad = true
+    }
+
+    // The automatic save is applied once the core runs: some cores only accept
+    // a state after their first frame.
+    LaunchedEffect(started, pendingAutoLoad) {
+        if (!started || !pendingAutoLoad) return@LaunchedEffect
+        pendingAutoLoad = false
+        val data = withContext(Dispatchers.IO) { store.read(SaveSlot.AUTO) }
+        val ok = data != null && withContext(Dispatchers.IO) {
+            runCatching { NativeCore.nativeUnserialize(data) }.getOrDefault(false)
+        }
+        if (!ok) message = loadStateFailedMessage
+    }
+
+    fun updateRotation(next: Int) {
         rotation = next
         prefs.setRotation(system.id, next)
         NativeCore.nativeSetRotation(next)
-        menuOpen = false
     }
 
-    fun cycleScaling() {
-        val next = Scaling.entries[(scaling.ordinal + 1) % Scaling.entries.size]
+    fun updateScaling(next: Scaling) {
         scaling = next
         prefs.setScaling(system.id, next)
     }
+
+    OnStop { saveAutoState() }
 
     Box(
         modifier = Modifier
@@ -285,6 +360,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                 ) {
                     return@onKeyEvent false
                 }
+                if (menuOpen || optionsOpen || resumePrompt) return@onKeyEvent false
                 when (event.type) {
                     KeyEventType.KeyDown -> {
                         NativeCore.nativeSetKey(code, true)
@@ -358,6 +434,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -369,12 +446,15 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = { menuOpen = true }) {
+                TextButton(onClick = {
+                    pausePage = PausePage.MAIN
+                    menuOpen = true
+                }) {
                     Text(stringResource(R.string.menu), color = Color.White)
                 }
             }
 
-            if (keyboardOpen) {
+            if (keyboardOpen && !menuOpen) {
                 KeyboardPanel(
                     Modifier
                         .align(Alignment.BottomCenter)
@@ -383,7 +463,7 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                 )
             }
 
-            if (!failed) {
+            if (!failed && !menuOpen) {
                 ControlOverlay(
                     preset = system.input,
                     state = pad,
@@ -394,42 +474,54 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
-
-            message?.let { text ->
-                Surface(
-                    color = Color.Black.copy(alpha = 0.78f),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 56.dp),
-                ) {
-                    Text(text, color = Color.White, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
-                }
-            }
         }
 
         if (menuOpen) {
-            PauseMenu(
-                stateExists = stateExists,
-                scaling = scaling,
+            PauseOverlay(
+                page = pausePage,
+                store = store,
+                version = slotsVersion,
+                onPage = { pausePage = it },
                 onResume = { menuOpen = false },
-                onSave = {
+                onScreenshot = {
                     menuOpen = false
-                    saveState()
-                },
-                onLoad = {
-                    menuOpen = false
-                    loadState()
+                    takeScreenshot()
                 },
                 onReset = {
                     menuOpen = false
                     NativeCore.nativeReset()
                 },
-                onRotation = { cycleRotation() },
-                onScaling = { cycleScaling() },
                 onOptions = {
                     menuOpen = false
                     optionsOpen = true
                 },
                 onExit = { confirmExit = true },
+                onSave = { saveSlot(it) },
+                onLoad = { loadSlot(it) },
+                onDelete = { deleteSlot(it) },
+                settings = {
+                    SettingsScreen(
+                        themeMode = themeMode,
+                        onThemeModeChange = onThemeModeChange,
+                        onOpenHelp = {},
+                        onOpenAbout = {},
+                        onBack = { pausePage = PausePage.MAIN },
+                        embedded = true,
+                        inGame = true,
+                        rotation = rotation,
+                        onRotationChange = { updateRotation(it) },
+                        scaling = scaling,
+                        onScalingChange = { updateScaling(it) },
+                    )
+                },
+            )
+        }
+
+        if (resumePrompt) {
+            ResumeDialog(
+                store = store,
+                onContinue = { continueFromAuto() },
+                onStartOver = { resumePrompt = false },
             )
         }
 
@@ -446,11 +538,26 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
                             TextButton(onClick = { confirmExit = false }) { Text(stringResource(R.string.cancel)) }
                             TextButton(onClick = {
                                 confirmExit = false
-                                onExit()
+                                exitGame()
                             }) { Text(stringResource(R.string.exit_game)) }
                         }
                     }
                 }
+            }
+        }
+
+        message?.let { text ->
+            Surface(
+                color = Color.Black.copy(alpha = 0.78f),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 56.dp),
+            ) {
+                Text(
+                    text,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                )
             }
         }
     }
@@ -476,59 +583,6 @@ private fun GameSurface(modifier: Modifier, onSurfaceChanged: (android.view.Surf
             }
         },
     )
-}
-
-@Composable
-private fun PauseMenu(
-    stateExists: Boolean,
-    scaling: Scaling,
-    onResume: () -> Unit,
-    onSave: () -> Unit,
-    onLoad: () -> Unit,
-    onReset: () -> Unit,
-    onRotation: () -> Unit,
-    onScaling: () -> Unit,
-    onOptions: () -> Unit,
-    onExit: () -> Unit,
-) {
-    Dialog(onDismissRequest = onResume) {
-        Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface) {
-            Column(
-                modifier = Modifier
-                    .width(300.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = 18.dp),
-            ) {
-                Text(
-                    stringResource(R.string.paused),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                )
-                MenuEntry(stringResource(R.string.resume), onResume)
-                MenuEntry(stringResource(R.string.save_state), onSave)
-                MenuEntry(stringResource(R.string.load_state), onLoad, enabled = stateExists)
-                MenuEntry(stringResource(R.string.reset), onReset)
-                MenuEntry(stringResource(R.string.rotation) + " · 90°", onRotation)
-                MenuEntry(
-                    stringResource(R.string.scaling) + " · " + stringResource(scalingLabel(scaling)),
-                    onScaling,
-                )
-                MenuEntry(stringResource(R.string.core_options), onOptions)
-                MenuEntry(stringResource(R.string.exit_game), onExit)
-            }
-        }
-    }
-}
-
-@Composable
-private fun MenuEntry(label: String, onClick: () -> Unit, enabled: Boolean = true) {
-    TextButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-    ) {
-        Text(label, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurface)
-    }
 }
 
 @Composable
@@ -621,10 +675,4 @@ private fun OptionRow(option: CoreOption, selected: String, onSelect: (String) -
             }
         }
     }
-}
-
-private fun scalingLabel(scaling: Scaling): Int = when (scaling) {
-    Scaling.FIT -> R.string.scaling_fit
-    Scaling.STRETCH -> R.string.scaling_stretch
-    Scaling.INTEGER -> R.string.scaling_integer
 }
