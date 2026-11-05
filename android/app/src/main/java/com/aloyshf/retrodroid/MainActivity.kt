@@ -28,6 +28,8 @@ import com.aloyshf.retrodroid.data.Library
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.ThemeMode
+import com.aloyshf.retrodroid.data.UpdateChecker
+import com.aloyshf.retrodroid.data.UpdateInfo
 import com.aloyshf.retrodroid.model.Registry
 import com.aloyshf.retrodroid.model.SystemInfo
 import com.aloyshf.retrodroid.ui.AboutScreen
@@ -39,6 +41,7 @@ import com.aloyshf.retrodroid.ui.LibrarySetupScreen
 import com.aloyshf.retrodroid.ui.OnResume
 import com.aloyshf.retrodroid.ui.RetroDroidTheme
 import com.aloyshf.retrodroid.ui.SettingsScreen
+import com.aloyshf.retrodroid.ui.UpdateAvailableDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -98,9 +101,18 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     var access by remember { mutableStateOf(Library.hasAccess(context)) }
     var skipped by rememberSaveable { mutableStateOf(false) }
     var screen by remember { mutableStateOf<Screen>(Screen.Home) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
 
     OnResume {
         access = Library.hasAccess(context)
+    }
+    LaunchedEffect(Unit) {
+        val prefs = Prefs(context)
+        if (!prefs.autoUpdateCheck()) return@LaunchedEffect
+        val now = System.currentTimeMillis()
+        if (now - prefs.lastUpdateCheck() < UpdateChecker.CHECK_INTERVAL_MS) return@LaunchedEffect
+        prefs.setLastUpdateCheck(now)
+        UpdateChecker.check(BuildConfig.VERSION_NAME).onSuccess { updateInfo = it }
     }
     LaunchedEffect(access, systems) {
         if (access) withContext(Dispatchers.IO) { Library.ensureLayout(systems) }
@@ -172,6 +184,14 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
             system = current.system,
             game = current.game,
             onExit = { screen = Screen.Games(current.system, current.folder) },
+        )
+    }
+
+    updateInfo?.let { info ->
+        UpdateAvailableDialog(
+            info = info,
+            currentVersion = BuildConfig.VERSION_NAME,
+            onDismiss = { updateInfo = null },
         )
     }
 }

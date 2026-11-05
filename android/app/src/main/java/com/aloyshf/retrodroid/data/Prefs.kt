@@ -60,6 +60,18 @@ class Prefs(context: Context) {
     fun setScreenOrientation(orientation: ScreenOrientation) {
         prefs.edit().putInt("screen_orientation", orientation.ordinal).apply()
     }
+
+    fun autoUpdateCheck(): Boolean = prefs.getBoolean("auto_update_check", true)
+
+    fun setAutoUpdateCheck(enabled: Boolean) {
+        prefs.edit().putBoolean("auto_update_check", enabled).apply()
+    }
+
+    fun lastUpdateCheck(): Long = prefs.getLong("last_update_check", 0L)
+
+    fun setLastUpdateCheck(time: Long) {
+        prefs.edit().putLong("last_update_check", time).apply()
+    }
 }
 
 enum class Scaling {

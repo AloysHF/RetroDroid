@@ -22,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +46,9 @@ import com.aloyshf.retrodroid.data.GameLayout
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.ScreenOrientation
 import com.aloyshf.retrodroid.data.ThemeMode
+import com.aloyshf.retrodroid.data.UpdateChecker
+import com.aloyshf.retrodroid.data.UpdateInfo
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,8 +68,55 @@ fun SettingsScreen(
     var languageDialog by remember { mutableStateOf(false) }
     var orientation by remember { mutableStateOf(prefs.screenOrientation()) }
     var orientationDialog by remember { mutableStateOf(false) }
+    var autoUpdateCheck by remember { mutableStateOf(prefs.autoUpdateCheck()) }
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var updateResult by remember { mutableStateOf<UpdateResult?>(null) }
+    val scope = rememberCoroutineScope()
 
     BackHandler(onBack = onBack)
+
+    val checkForUpdates: () -> Unit = {
+        if (!checkingUpdate) {
+            checkingUpdate = true
+            scope.launch {
+                updateResult = UpdateChecker.check(BuildConfig.VERSION_NAME).fold(
+                    onSuccess = { info ->
+                        if (info != null) UpdateResult.Available(info) else UpdateResult.Latest
+                    },
+                    onFailure = { UpdateResult.Failed },
+                )
+                checkingUpdate = false
+            }
+        }
+    }
+
+    when (val outcome = updateResult) {
+        is UpdateResult.Available -> UpdateAvailableDialog(
+            info = outcome.info,
+            currentVersion = BuildConfig.VERSION_NAME,
+            onDismiss = { updateResult = null },
+        )
+
+        UpdateResult.Latest -> AlertDialog(
+            onDismissRequest = { updateResult = null },
+            title = { Text(stringResource(R.string.update_latest_title)) },
+            text = { Text(stringResource(R.string.update_latest_body, BuildConfig.VERSION_NAME)) },
+            confirmButton = {
+                TextButton(onClick = { updateResult = null }) { Text(stringResource(R.string.confirm)) }
+            },
+        )
+
+        UpdateResult.Failed -> AlertDialog(
+            onDismissRequest = { updateResult = null },
+            title = { Text(stringResource(R.string.update_failed_title)) },
+            text = { Text(stringResource(R.string.update_failed_body)) },
+            confirmButton = {
+                TextButton(onClick = { updateResult = null }) { Text(stringResource(R.string.confirm)) }
+            },
+        )
+
+        null -> Unit
+    }
 
     if (layoutDialog) {
         ChoiceDialog(
@@ -205,6 +257,28 @@ fun SettingsScreen(
                 )
             }
 
+            SettingsSection(stringResource(R.string.settings_section_updates)) {
+                SettingRow(
+                    title = stringResource(R.string.update_check),
+                    summary = stringResource(R.string.update_check_summary, BuildConfig.VERSION_NAME),
+                    value = if (checkingUpdate) stringResource(R.string.update_checking) else "",
+                    onClick = checkForUpdates,
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                SettingSwitchRow(
+                    title = stringResource(R.string.update_auto),
+                    summary = stringResource(R.string.update_auto_summary),
+                    checked = autoUpdateCheck,
+                    onCheckedChange = { enabled ->
+                        autoUpdateCheck = enabled
+                        prefs.setAutoUpdateCheck(enabled)
+                    },
+                )
+            }
+
             SettingsSection(stringResource(R.string.settings_section_support)) {
                 SettingRow(
                     title = stringResource(R.string.help_title),
@@ -318,6 +392,39 @@ private fun SettingRow(
             modifier = Modifier.padding(start = 6.dp),
         )
     }
+}
+
+@Composable
+private fun SettingSwitchRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+private sealed interface UpdateResult {
+    data class Available(val info: UpdateInfo) : UpdateResult
+    data object Latest : UpdateResult
+    data object Failed : UpdateResult
 }
 
 private fun layoutLabel(layout: GameLayout): Int = when (layout) {
