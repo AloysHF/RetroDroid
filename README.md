@@ -1,6 +1,10 @@
 # RetroDroid
 
 <p align="center">
+  <img src="res/logo-banner.png" alt="RetroDroid" width="600">
+</p>
+
+<p align="center">
   <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml/badge.svg" alt="Android APK"></a>
   <a href="https://github.com/AloysHF/RetroDroid/releases/latest"><img src="https://img.shields.io/github/v/release/AloysHF/RetroDroid" alt="Release"></a>
