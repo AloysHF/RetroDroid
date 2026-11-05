@@ -40,6 +40,13 @@ class Prefs(context: Context) {
         prefs.edit().putInt("game_layout", layout.ordinal).apply()
     }
 
+    fun gameSort(): GameSort =
+        GameSort.entries.getOrElse(prefs.getInt("game_sort", 0)) { GameSort.NAME }
+
+    fun setGameSort(sort: GameSort) {
+        prefs.edit().putInt("game_sort", sort.ordinal).apply()
+    }
+
     fun themeMode(): ThemeMode =
         ThemeMode.entries.getOrElse(prefs.getInt("theme_mode", ThemeMode.DARK.ordinal)) { ThemeMode.DARK }
 

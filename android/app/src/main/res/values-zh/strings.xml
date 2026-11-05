@@ -17,6 +17,20 @@
     <string name="scanning">扫描中…</string>
     <string name="system_extensions">支持的文件：%1$s</string>
     <string name="games_title">%1$s 游戏</string>
+    <string name="game_search">搜索游戏</string>
+    <string name="game_sort">排序</string>
+    <string name="sort_name">名称</string>
+    <string name="sort_recent">最近游玩</string>
+    <string name="sort_play_time">游玩时长</string>
+    <string name="sort_size">文件大小</string>
+    <string name="no_search_results">没有匹配「%1$s」的游戏。</string>
+    <string name="play_time_hours">%1$d 小时 %2$d 分</string>
+    <string name="play_time_minutes">%1$d 分钟</string>
+    <string name="play_time_less_minute">&lt;1 分钟</string>
+    <string name="just_now">刚刚</string>
+    <string name="minutes_ago">%1$d 分钟前</string>
+    <string name="hours_ago">%1$d 小时前</string>
+    <string name="days_ago">%1$d 天前</string>
 
     <string name="library_title">游戏库</string>
     <string name="library_grant">授予文件访问权限</string>

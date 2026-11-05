@@ -1,5 +1,6 @@
 package com.aloyshf.retrodroid.ui
 
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -31,6 +32,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +57,7 @@ import androidx.compose.ui.window.Dialog
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.audio.AudioPlayer
 import com.aloyshf.retrodroid.core.NativeCore
+import com.aloyshf.retrodroid.data.PlayStats
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.Scaling
@@ -151,6 +154,32 @@ fun EmulationScreen(system: SystemInfo, game: RomEntry?, onExit: () -> Unit) {
         }
         started = true
         audio.start(video.getOrElse(3) { 44100 })
+    }
+
+    // A session counts from the moment the core actually runs, so a failed
+    // load never lands in the play time.
+    val gameKey = game?.uri?.toString()
+    val playStats = remember { PlayStats(context) }
+    val sessionStartedAt = remember { mutableLongStateOf(0L) }
+    val sessionStartElapsed = remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(started, gameKey) {
+        if (!started || gameKey == null || sessionStartedAt.longValue != 0L) return@LaunchedEffect
+        sessionStartedAt.longValue = System.currentTimeMillis()
+        sessionStartElapsed.longValue = SystemClock.elapsedRealtime()
+        withContext(Dispatchers.IO) { playStats.recordStart(gameKey, sessionStartedAt.longValue) }
+    }
+
+    DisposableEffect(gameKey) {
+        onDispose {
+            val key = gameKey
+            if (key != null && sessionStartedAt.longValue != 0L) {
+                playStats.recordSession(
+                    key,
+                    SystemClock.elapsedRealtime() - sessionStartElapsed.longValue,
+                )
+            }
+        }
     }
 
     LaunchedEffect(menuOpen, optionsOpen) {

@@ -31,8 +31,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,18 +63,26 @@ import androidx.documentfile.provider.DocumentFile
 import com.aloyshf.retrodroid.AppLocale
 import com.aloyshf.retrodroid.R
 import com.aloyshf.retrodroid.data.GameLayout
+import com.aloyshf.retrodroid.data.GameSort
+import com.aloyshf.retrodroid.data.GameStat
 import com.aloyshf.retrodroid.data.Library
+import com.aloyshf.retrodroid.data.PlayStats
 import com.aloyshf.retrodroid.data.Prefs
 import com.aloyshf.retrodroid.data.RomEntry
 import com.aloyshf.retrodroid.data.RomTree
 import com.aloyshf.retrodroid.data.SessionFiles
+import com.aloyshf.retrodroid.data.sortGames
 import com.aloyshf.retrodroid.model.FirmwareFile
 import com.aloyshf.retrodroid.model.ModelOption
 import com.aloyshf.retrodroid.model.SystemInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+
+private const val RECENT_LIMIT = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,10 +98,14 @@ fun GameListScreen(
     val importedMessage = stringResource(R.string.firmware_imported)
     val failedMessage = stringResource(R.string.firmware_failed)
     val prefs = remember { Prefs(context) }
+    val playStats = remember { PlayStats(context) }
     val layout = remember { prefs.gameLayout() }
 
     var hasAccess by remember { mutableStateOf(Library.hasAccess(context)) }
     var games by remember { mutableStateOf<List<RomEntry>>(emptyList()) }
+    var stats by remember { mutableStateOf<Map<String, GameStat>>(emptyMap()) }
+    var query by remember { mutableStateOf("") }
+    var sort by remember { mutableStateOf(prefs.gameSort()) }
     var scanning by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
     var firmwareVersion by remember { mutableIntStateOf(0) }
@@ -110,10 +125,9 @@ fun GameListScreen(
         refreshKey++
     }
 
-    // Walking into a folder is a step the system back button should undo
-    // before leaving the system entirely.
-    BackHandler(enabled = folder.isNotEmpty()) {
-        onFolder(RomTree.parent(folder))
+    // A search is the innermost step back should undo, then the folder walk.
+    BackHandler(enabled = folder.isNotEmpty() || query.isNotEmpty()) {
+        if (query.isNotEmpty()) query = "" else onFolder(RomTree.parent(folder))
     }
 
     val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
@@ -152,6 +166,7 @@ fun GameListScreen(
                 emptyList()
             }
         }
+        stats = withContext(Dispatchers.IO) { playStats.load() }
         hasAccess = Library.hasAccess(context)
         scanning = false
         firmwareVersion++
@@ -189,13 +204,36 @@ fun GameListScreen(
     val folderPath = listOf("ROMs", system.id, folder)
         .filter { it.isNotEmpty() }
         .joinToString("/")
+    // A query searches the whole system, so games buried in subfolders are
+    // found without walking into them; the results are shown flat.
+    val trimmedQuery = query.trim()
+    val searching = trimmedQuery.isNotEmpty()
     val folders = remember(games, folder) { RomTree.folders(games, folder) }
     val folderGames = remember(games, folder) { RomTree.games(games, folder) }
+    val visibleGames = remember(games, folder, sort, stats, trimmedQuery) {
+        val source = if (searching) {
+            games.filter { it.name.contains(trimmedQuery, ignoreCase = true) }
+        } else {
+            folderGames
+        }
+        sortGames(source, sort, stats)
+    }
     val folderCounts = remember(games, folders) {
         folders.associateWith { RomTree.countBelow(games, it) }
     }
     val totalGames = remember(games, folder) { RomTree.countBelow(games, folder) }
     val atRoot = folder.isEmpty()
+    // Shortcuts across the whole system once per root visit; subfolders hide
+    // them because the folder walk itself is the navigation there.
+    val recentGames = remember(games, stats, searching, atRoot) {
+        if (searching || !atRoot) {
+            emptyList()
+        } else {
+            sortGames(games, GameSort.RECENT, stats)
+                .filter { (stats[it.uri.toString()]?.lastPlayed ?: 0L) > 0L }
+                .take(RECENT_LIMIT)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -267,6 +305,15 @@ fun GameListScreen(
                     )
                 }
             } else {
+                BrowseControls(
+                    query = query,
+                    onQueryChange = { query = it },
+                    sort = sort,
+                    onSortChange = { option ->
+                        sort = option
+                        prefs.setGameSort(option)
+                    },
+                )
                 when {
                     scanning -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -286,22 +333,83 @@ fun GameListScreen(
                         onAction = { refreshKey++ },
                     )
 
+                    searching && visibleGames.isEmpty() -> EmptyState(
+                        text = stringResource(R.string.no_search_results, trimmedQuery),
+                        action = stringResource(R.string.cancel),
+                        onAction = { query = "" },
+                    )
+
                     layout == GameLayout.GRID -> GameGridContent(
-                        folders = folders,
+                        folders = if (searching) emptyList() else folders,
                         folderCounts = folderCounts,
-                        games = folderGames,
-                        totalGames = totalGames,
+                        recent = recentGames,
+                        games = visibleGames,
+                        count = if (searching) visibleGames.size else totalGames,
+                        stats = stats,
+                        showFolder = searching,
                         onFolder = onFolder,
                         onPlay = onPlay,
                     )
 
                     else -> GameListContent(
-                        folders = folders,
+                        folders = if (searching) emptyList() else folders,
                         folderCounts = folderCounts,
-                        games = folderGames,
-                        totalGames = totalGames,
+                        recent = recentGames,
+                        games = visibleGames,
+                        count = if (searching) visibleGames.size else totalGames,
+                        stats = stats,
+                        showFolder = searching,
                         onFolder = onFolder,
                         onPlay = onPlay,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BrowseControls(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    sort: GameSort,
+    onSortChange: (GameSort) -> Unit,
+) {
+    var sortMenu by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.weight(1f),
+            placeholder = { Text(stringResource(R.string.game_search)) },
+            singleLine = true,
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    TextButton(onClick = { onQueryChange("") }, contentPadding = PaddingValues(0.dp)) {
+                        Text("×", style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            },
+        )
+        Box {
+            TextButton(onClick = { sortMenu = true }) {
+                Text(stringResource(R.string.game_sort))
+            }
+            DropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
+                GameSort.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(sortLabel(option))) },
+                        onClick = {
+                            sortMenu = false
+                            onSortChange(option)
+                        },
+                        trailingIcon = {
+                            if (option == sort) Text("✓", color = MaterialTheme.colorScheme.primary)
+                        },
                     )
                 }
             }
@@ -313,8 +421,11 @@ fun GameListScreen(
 private fun GameListContent(
     folders: List<String>,
     folderCounts: Map<String, Int>,
+    recent: List<RomEntry>,
     games: List<RomEntry>,
-    totalGames: Int,
+    count: Int,
+    stats: Map<String, GameStat>,
+    showFolder: Boolean,
     onFolder: (String) -> Unit,
     onPlay: (RomEntry) -> Unit,
 ) {
@@ -323,7 +434,17 @@ private fun GameListContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item { GameCountHeader(totalGames) }
+        item { GameCountHeader(count) }
+        if (recent.isNotEmpty()) {
+            item { SectionHeader(stringResource(R.string.sort_recent)) }
+            items(recent, key = { "recent:${it.uri}" }) { entry ->
+                GameRow(
+                    entry = entry,
+                    stat = stats[entry.uri.toString()] ?: GameStat(),
+                    showFolder = true,
+                ) { onPlay(entry) }
+            }
+        }
         items(folders, key = { "folder:$it" }) { path ->
             FolderRow(
                 name = RomTree.name(path),
@@ -331,7 +452,11 @@ private fun GameListContent(
             ) { onFolder(path) }
         }
         items(games, key = { it.uri.toString() }) { entry ->
-            GameRow(entry) { onPlay(entry) }
+            GameRow(
+                entry = entry,
+                stat = stats[entry.uri.toString()] ?: GameStat(),
+                showFolder = showFolder,
+            ) { onPlay(entry) }
         }
     }
 }
@@ -340,8 +465,11 @@ private fun GameListContent(
 private fun GameGridContent(
     folders: List<String>,
     folderCounts: Map<String, Int>,
+    recent: List<RomEntry>,
     games: List<RomEntry>,
-    totalGames: Int,
+    count: Int,
+    stats: Map<String, GameStat>,
+    showFolder: Boolean,
     onFolder: (String) -> Unit,
     onPlay: (RomEntry) -> Unit,
 ) {
@@ -352,7 +480,19 @@ private fun GameGridContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) { GameCountHeader(totalGames) }
+        item(span = { GridItemSpan(maxLineSpan) }) { GameCountHeader(count) }
+        if (recent.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SectionHeader(stringResource(R.string.sort_recent))
+            }
+            gridItems(recent, key = { "recent:${it.uri}" }) { entry ->
+                GameTile(
+                    entry = entry,
+                    stat = stats[entry.uri.toString()] ?: GameStat(),
+                    showFolder = true,
+                ) { onPlay(entry) }
+            }
+        }
         gridItems(folders, key = { "folder:$it" }, span = { GridItemSpan(maxLineSpan) }) { path ->
             FolderRow(
                 name = RomTree.name(path),
@@ -360,15 +500,29 @@ private fun GameGridContent(
             ) { onFolder(path) }
         }
         gridItems(games, key = { it.uri.toString() }) { entry ->
-            GameTile(entry) { onPlay(entry) }
+            GameTile(
+                entry = entry,
+                stat = stats[entry.uri.toString()] ?: GameStat(),
+                showFolder = showFolder,
+            ) { onPlay(entry) }
         }
     }
 }
 
 @Composable
-private fun GameCountHeader(totalGames: Int) {
+private fun SectionHeader(title: String) {
     Text(
-        pluralStringResource(R.plurals.game_count, totalGames, totalGames),
+        title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun GameCountHeader(count: Int) {
+    Text(
+        pluralStringResource(R.plurals.game_count, count, count),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 4.dp),
@@ -376,7 +530,12 @@ private fun GameCountHeader(totalGames: Int) {
 }
 
 @Composable
-private fun GameTile(entry: RomEntry, onClick: () -> Unit) {
+private fun GameTile(
+    entry: RomEntry,
+    stat: GameStat,
+    showFolder: Boolean,
+    onClick: () -> Unit,
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
@@ -386,21 +545,26 @@ private fun GameTile(entry: RomEntry, onClick: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(14.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                entry.name,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Column {
+                Text(
+                    entry.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                FolderHint(entry = entry, showFolder = showFolder)
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    if (entry.size > 0) formatSize(entry.size) else "",
+                    gameMeta(entry, stat, compact = true),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
                 Text("▶", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             }
@@ -582,7 +746,12 @@ private fun FirmwareBanner(
 }
 
 @Composable
-private fun GameRow(entry: RomEntry, onClick: () -> Unit) {
+private fun GameRow(
+    entry: RomEntry,
+    stat: GameStat,
+    showFolder: Boolean,
+    onClick: () -> Unit,
+) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -591,24 +760,77 @@ private fun GameRow(entry: RomEntry, onClick: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     entry.name,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (entry.size > 0) {
+                FolderHint(entry = entry, showFolder = showFolder)
+                val meta = gameMeta(entry, stat)
+                if (meta.isNotEmpty()) {
                     Text(
-                        formatSize(entry.size),
+                        meta,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             Spacer(Modifier.width(8.dp))
             Text("▶", color = MaterialTheme.colorScheme.primary)
         }
+    }
+}
+
+/** Which folder a search result came from, so flat results stay traceable. */
+@Composable
+private fun FolderHint(entry: RomEntry, showFolder: Boolean) {
+    if (!showFolder || entry.dir.isEmpty()) return
+    Text(
+        "${entry.dir}/",
+        style = MaterialTheme.typography.labelSmall,
+        fontFamily = FontFamily.Monospace,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+@Composable
+private fun gameMeta(entry: RomEntry, stat: GameStat, compact: Boolean = false): String {
+    val parts = mutableListOf<String>()
+    if (entry.size > 0) parts += formatSize(entry.size)
+    if (stat.playMillis > 0) parts += formatPlayTime(stat.playMillis)
+    if (!compact && stat.lastPlayed > 0) parts += lastPlayedLabel(stat.lastPlayed)
+    return parts.joinToString("  ·  ")
+}
+
+/**
+ * Relative time worded by the app language. DateUtils resolves against the
+ * system locale, which would leak Chinese into an English UI (and back).
+ */
+@Composable
+private fun lastPlayedLabel(lastPlayed: Long): String {
+    val minutes = ((System.currentTimeMillis() - lastPlayed).coerceAtLeast(0)) / 60_000
+    return when {
+        minutes < 1 -> stringResource(R.string.just_now)
+        minutes < 60 -> stringResource(R.string.minutes_ago, minutes.toInt())
+        minutes < 24 * 60 -> stringResource(R.string.hours_ago, (minutes / 60).toInt())
+        minutes < 7 * 24 * 60 -> stringResource(R.string.days_ago, (minutes / (24 * 60)).toInt())
+        else -> SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date(lastPlayed))
+    }
+}
+
+@Composable
+private fun formatPlayTime(millis: Long): String {
+    val minutes = millis / 60_000
+    return when {
+        minutes < 1 -> stringResource(R.string.play_time_less_minute)
+        minutes < 60 -> stringResource(R.string.play_time_minutes, minutes.toInt())
+        else -> stringResource(R.string.play_time_hours, (minutes / 60).toInt(), (minutes % 60).toInt())
     }
 }
 
@@ -649,6 +871,13 @@ private fun EmptyState(text: String, action: String, onAction: () -> Unit) {
             Button(onClick = onAction) { Text(action) }
         }
     }
+}
+
+private fun sortLabel(sort: GameSort): Int = when (sort) {
+    GameSort.NAME -> R.string.sort_name
+    GameSort.RECENT -> R.string.sort_recent
+    GameSort.PLAY_TIME -> R.string.sort_play_time
+    GameSort.SIZE -> R.string.sort_size
 }
 
 private fun formatSize(bytes: Long): String = when {
