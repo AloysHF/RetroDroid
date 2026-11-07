@@ -27,7 +27,11 @@ class AudioPlayer {
         )
         if (minBuffer <= 0) return
 
-        val bufferSize = maxOf(minBuffer, sampleRate / 4 * 4)
+        // Keep the hardware queue short: everything queued here is audio the
+        // player has not heard yet, so an oversized track buffer turns into a
+        // constant audio-vs-video lag. Fifty milliseconds still absorbs frame
+        // jitter without being audible as a delay.
+        val bufferSize = maxOf(minBuffer, sampleRate / 20 * 4)
         val audio = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()

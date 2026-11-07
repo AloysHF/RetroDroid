@@ -66,6 +66,10 @@ without per-app patches.
   stereo frames, `sample_rate` as reported by `retro_get_system_av_info()`.
 - A core may emit silence when muted; it must not block or allocate unbounded
   buffers when the frontend consumes audio more slowly than it is produced.
+- The frontend keeps only a short window (~200 ms) of buffered audio and drops
+  the oldest samples when it overflows, so audio stays aligned with the video
+  the player is seeing. Cores must not rely on audio being queued longer than
+  that window.
 
 ### 1.5 Errors
 
