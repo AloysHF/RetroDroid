@@ -195,4 +195,7 @@
     <string name="help_trouble_game">游戏没有出现：检查扩展名，确认放在正确的 ROMs/&lt;system&gt; 目录，然后点「刷新」。</string>
     <string name="help_trouble_firmware">未识别固件：逐字核对文件名与目录拼写，然后点「刷新」或重启应用。</string>
     <string name="help_trouble_access">完全找不到文件：在首页卡片中授予「所有文件访问」权限。</string>
+    <string name="external_pick_system">选择打开方式</string>
+    <string name="external_unsupported">RetroDroid 没有支持该文件类型的系统。</string>
+    <string name="external_open_failed">无法打开该游戏文件。</string>
 </resources>
