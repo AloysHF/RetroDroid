@@ -142,6 +142,11 @@ body::after {
   -webkit-text-fill-color: transparent;
 }
 
+.nav-logo-icon {
+  border-radius: 7px;
+  box-shadow: 0 0 12px rgba(143, 255, 74, 0.3);
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -577,19 +582,14 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.app-icon {
+.app-logo {
   flex: none;
-  font-family: var(--font-mono);
-  font-size: 0.56rem;
-  font-weight: 800;
-  padding: 6px 5px;
-  border-radius: 7px;
-  letter-spacing: 0.03em;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
 }
-
-.i-green { background: rgba(143, 255, 74, 0.14); color: var(--green); }
-.i-cyan  { background: rgba(53, 224, 240, 0.14); color: var(--cyan); }
-.i-amber { background: rgba(255, 197, 61, 0.14); color: var(--amber); }
 
 .app-row-text { flex: 1; min-width: 0; }
 .app-row-text strong { display: block; font-size: 0.72rem; }
@@ -796,9 +796,19 @@ body::after {
 }
 
 .system-icon {
-  font-size: 1.9rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(53, 224, 240, 0.35));
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.system-icon img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(53, 224, 240, 0.3));
 }
 
 .license-chip {

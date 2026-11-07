@@ -10,39 +10,39 @@
   // SYSTEM DATA — the nine bundled libretro cores
   // ================================================================
   var SYSTEMS = [
-    { id: 'native32', icon: '🕹️', nameZh: 'Native32', nameEn: 'Native32', core: 'native32emu', lic: 'bsd',
+    { id: 'native32', icon: 'assets/systems/logo_native32.webp', nameZh: 'Native32', nameEn: 'Native32', core: 'native32emu', lic: 'bsd',
       subZh: 'Sunplus SPG 芯片游戏', subEn: 'Sunplus SPG chip games',
       descZh: '运行在 Sunplus DVD 芯片栈式虚拟机上的经典电视游戏，从字节码到 MPEG-1 过场完整还原。',
       descEn: 'Classic TV games running on the stack VM of Sunplus DVD chips — fully recreated from bytecode to MPEG-1 cutscenes.' },
-    { id: 'spmp8000', icon: '📟', nameZh: 'WooBooKong', nameEn: 'WooBooKong / SPMP8000', core: 'spmp8000', lic: 'bsd',
+    { id: 'spmp8000', icon: 'assets/systems/logo_spmp8000.webp', nameZh: 'WooBooKong', nameEn: 'WooBooKong / SPMP8000', core: 'spmp8000', lic: 'bsd',
       subZh: 'SPMP8000 掌机游戏', subEn: 'SPMP8000 handheld games',
       descZh: '基于华芯 SPMP8000 芯片的国产掌机，还原它的彩色屏幕与内置游戏。',
       descEn: 'Handhelds built on the SPMP8000 chip, recreating their color screens and built-in games.' },
-    { id: 'coolbar', icon: '🏎️', nameZh: 'Coolbar', nameEn: 'Coolbar (MTK)', core: 'coolbar', lic: 'bsd',
+    { id: 'coolbar', icon: 'assets/systems/logo_coolbar.webp', nameZh: 'Coolbar', nameEn: 'Coolbar (MTK)', core: 'coolbar', lic: 'bsd',
       subZh: 'MTK 方向盘游戏机', subEn: 'MTK steering-wheel consoles',
       descZh: '联发科方案的红白机风格方向盘电视游戏机，支持可选的方向配置文件。',
       descEn: 'MTK-based steering-wheel TV consoles, with an optional orientation profile.' },
-    { id: 'dingoo', icon: '🎮', nameZh: 'Dingoo A320', nameEn: 'Dingoo A320', core: 'dingoo', lic: 'bsd',
+    { id: 'dingoo', icon: 'assets/systems/logo_dingoo.webp', nameZh: 'Dingoo A320', nameEn: 'Dingoo A320', core: 'dingoo', lic: 'bsd',
       subZh: '经典开源掌机', subEn: 'The classic open handheld',
       descZh: '2010 年代经典的 A320 开源掌机平台，那个时代随身模拟游戏的记忆。',
       descEn: 'The iconic A320 open handheld platform — portable retro gaming of its era.' },
-    { id: 'hyperscan', icon: '🃏', nameZh: 'HyperScan', nameEn: 'HyperScan', core: 'hyperscan', lic: 'bsd',
+    { id: 'hyperscan', icon: 'assets/systems/logo_hyperscan.webp', nameZh: 'HyperScan', nameEn: 'HyperScan', core: 'hyperscan', lic: 'bsd',
       subZh: 'Mattel RFID 主机', subEn: "Mattel's RFID console",
       descZh: '美泰 2006 年推出的 RFID 卡片游戏主机，市场存世稀少，如今在手机上复生。',
       descEn: "Mattel's 2006 RFID card console — rare in the wild, revived on your phone." },
-    { id: 'playdia', icon: '💿', nameZh: 'Playdia', nameEn: 'Playdia', core: 'playdia', lic: 'bsd',
+    { id: 'playdia', icon: 'assets/systems/logo_playdia.webp', nameZh: 'Playdia', nameEn: 'Playdia', core: 'playdia', lic: 'bsd',
       subZh: '万代光盘主机', subEn: "Bandai's CD-based console",
       descZh: '万代 1994 年的 FMV 光盘主机，动画互动电影与教育游戏随 .cue 直接加载。',
       descEn: "Bandai's 1994 FMV console — interactive anime titles load straight from .cue sheets." },
-    { id: 'bbk', icon: '📖', nameZh: '步步高电子词典', nameEn: 'BBK Dictionary', core: 'bbkemu', lic: 'gpl',
+    { id: 'bbk', icon: 'assets/systems/logo_bbk.webp', nameZh: '步步高电子词典', nameEn: 'BBK Dictionary', core: 'bbkemu', lic: 'gpl',
       subZh: 'a4980 / a4988 机型', subEn: 'a4980 / a4988 models',
       descZh: '一代人的课堂记忆：步步高电子词典上的学习游戏与隐藏彩蛋。',
       descEn: 'A classroom memory for a generation — study games and easter eggs on BBK dictionaries.' },
-    { id: 'lavax', icon: '📚', nameZh: 'LavaX', nameEn: 'LavaX', core: 'lavax', lic: 'gpl',
+    { id: 'lavax', icon: 'assets/systems/logo_lavax.webp', nameZh: 'LavaX', nameEn: 'LavaX', core: 'lavax', lic: 'gpl',
       subZh: 'Lava X 学习掌机', subEn: 'Lava X learning handhelds',
       descZh: '运行 Lava 语言的学习型掌机，内置游戏与自制程序皆可运行。',
       descEn: 'Learning handhelds running the Lava language — stock games and homebrew alike.' },
-    { id: 'wqx', icon: '🧮', nameZh: '文曲星 WQX', nameEn: 'WQX (Wenquxing)', core: 'wqx', lic: 'gpl',
+    { id: 'wqx', icon: 'assets/systems/logo_wqx.webp', nameZh: '文曲星 WQX', nameEn: 'WQX (Wenquxing)', core: 'wqx', lic: 'gpl',
       subZh: 'nc1020 / pc1000 / cc800 / nc2000 / nc3000', subEn: 'nc1020 / pc1000 / cc800 / nc2000 / nc3000',
       descZh: '从 NC1020 到 NC3000 的文曲星全机型，无需游戏内容，选择机型直接启动固件。',
       descEn: 'Every Wenquxing model from NC1020 to NC3000 — no game content needed, just boot the firmware.' }
@@ -345,7 +345,7 @@
       var desc = currentLang === 'zh' ? s.descZh : s.descEn;
       html += '<div class="system-card">';
       html += '  <div class="system-head">';
-      html += '    <span class="system-icon">' + s.icon + '</span>';
+      html += '    <span class="system-icon"><img src="' + s.icon + '" alt="' + (currentLang === 'zh' ? s.nameZh : s.nameEn) + '" loading="lazy"></span>';
       html += '    <span class="license-chip ' + (s.lic === 'bsd' ? 'lic-bsd' : 'lic-gpl') + '">' + (s.lic === 'bsd' ? 'BSD-3' : 'GPL-3.0') + '</span>';
       html += '  </div>';
       html += '  <h3>' + name + '</h3>';
