@@ -193,4 +193,7 @@
     <string name="help_trouble_game">A game does not appear — check its extension and that it sits under the right ROMs/&lt;system&gt; folder, then tap Refresh.</string>
     <string name="help_trouble_firmware">Firmware is not detected — compare file names and folder spelling letter by letter, then tap Refresh or restart the app.</string>
     <string name="help_trouble_access">Nothing is found at all — grant All files access on the home screen card.</string>
+    <string name="external_pick_system">Open with</string>
+    <string name="external_unsupported">No RetroDroid system supports this file type.</string>
+    <string name="external_open_failed">Could not open the game file.</string>
 </resources>

@@ -129,6 +129,31 @@ a large library stays browsable; the back arrow and the back gesture step out
 of a folder one level. For disc-based systems keep the `.cue` sheet next to its
 tracks (`ROMs/playdia/game.cue` and `ROMs/playdia/game.bin`).
 
+### Launching from a front-end
+
+Android front-ends such as Tianma G (天马G) or ES-DE can start games directly:
+the file extension picks the system, and leaving the game returns to the
+calling front-end. `All files access` must be granted once beforehand, and
+extensions shared by several systems (`.bin`, `.cue`, `.zip`) ask which one to
+use.
+
+Tianma G-style per-system entry:
+
+```text
+extensions: <the extensions that system accepts>
+launch: am start
+ -n com.aloyshf.retrodroid/.MainActivity
+ -a android.intent.action.VIEW
+ -d file://{file.path}
+```
+
+The `ROM` string extra works too, as do the `rom`, `path` and `game_path`
+spellings, and `content://` URIs (copied into the app cache before play):
+
+```text
+am start -n com.aloyshf.retrodroid/.MainActivity -e ROM "{file.path}"
+```
+
 ## Building
 
 Requirements: Rust with the Android targets, the Android NDK (r27+), JDK 17+,
