@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RetroDroid — 一个 APK，九大经典系统</title>
+  <meta name="description" content="RetroDroid：Android 全能 libretro 前端，一个 APK 内置九大模拟器核心，无需在应用内下载">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ====== NAV ====== -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-logo">
+        <img src="assets/favicon.svg" alt="RetroDroid" width="30" height="30">
+        <span>RetroDroid</span>
+      </a>
+      <div class="nav-links">
+        <a href="#systems" data-i18n="nav-systems">支持系统</a>
+        <a href="#features" data-i18n="nav-features">特性</a>
+        <a href="#quickstart" data-i18n="nav-quickstart">快速上手</a>
+        <a href="#family" data-i18n="nav-family">模拟器家族</a>
+        <a href="https://discord.gg/E4SQjXUkZy" class="nav-discord" target="_blank" rel="noopener" aria-label="Discord">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        </a>
+        <button id="lang-toggle" class="lang-toggle" aria-label="Switch language">EN</button>
+        <a href="https://github.com/AloysHF/RetroDroid" class="nav-github" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+      </div>
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ====== HERO ====== -->
+  <section id="hero">
+    <div class="hero-bg">
+      <canvas id="pixel-canvas"></canvas>
+      <div class="hero-grid-floor"></div>
+      <div class="hero-float pixel-float p1"></div>
+      <div class="hero-float pixel-float p2"></div>
+      <div class="hero-float pixel-float p3"></div>
+    </div>
+    <div class="hero-content">
+      <img src="assets/logo-banner.png" alt="RetroDroid" class="hero-banner" width="620" height="186">
+      <p class="hero-tag" data-i18n="hero-tag">AloysHF 模拟器家族 · Android 全能前端</p>
+      <p class="hero-subtitle" data-i18n="hero-subtitle">一个 APK，九大经典系统，应用内零下载</p>
+      <p class="hero-desc" data-i18n="hero-desc">所有模拟器核心随 APK 一并内置、随应用一同更新——从 Sunplus 芯片游戏到文曲星电子词典，一台手机全部搞定。</p>
+      <div class="hero-badges">
+        <img src="https://img.shields.io/github/v/release/AloysHF/RetroDroid?style=flat-square" alt="Release">
+        <img src="https://img.shields.io/github/downloads/AloysHF/RetroDroid/total?style=flat-square&label=downloads" alt="Downloads">
+        <img src="https://img.shields.io/badge/license-BSD%203--Clause-blue?style=flat-square" alt="License">
+        <img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 7.0+">
+      </div>
+      <div class="hero-actions">
+        <a href="https://github.com/AloysHF/RetroDroid/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 011 12.25v-2.5a.75.75 0 011.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25v-2.5a.75.75 0 011.5 0v2.5A1.75 1.75 0 0113.25 14H2.75z"/><path d="M7.25 7.689V2a.75.75 0 011.5 0v5.689l1.97-1.969a.749.749 0 111.06 1.06l-3.25 3.25a.749.749 0 01-1.06 0L4.22 6.78a.749.749 0 111.06-1.06l1.97 1.969z"/></svg>
+          <span data-i18n="hero-download">下载 APK</span>
+        </a>
+        <a href="https://github.com/AloysHF/RetroDroid" class="btn btn-secondary" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span data-i18n="hero-github">查看源码</span>
+        </a>
+        <a href="#community" class="btn btn-discord">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          <span data-i18n="hero-join">加入社区</span>
+        </a>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <span data-i18n="hero-scroll">向下滚动探索</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- ====== STATS ====== -->
+  <section id="stats" class="section section-dark">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item fade-in-up">
+          <div class="stat-number" data-target="9">0</div>
+          <div class="stat-label" data-i18n="stat-systems">模拟系统</div>
+          <div class="stat-sub" data-i18n="stat-systems-sub">核心全部内置</div>
+        </div>
+        <div class="stat-item fade-in-up">
+          <div class="stat-number" data-target="1">0</div>
+          <div class="stat-label" data-i18n="stat-apk">个 APK</div>
+          <div class="stat-sub" data-i18n="stat-apk-sub">安装即玩</div>
+        </div>
+        <div class="stat-item fade-in-up">
+          <div class="stat-number" data-target="0">0</div>
+          <div class="stat-label" data-i18n="stat-dl">应用内下载</div>
+          <div class="stat-sub" data-i18n="stat-dl-sub">离线也完整可用</div>
+        </div>
+        <div class="stat-item fade-in-up">
+          <div class="stat-number" data-target="5">0</div>
+          <div class="stat-label" data-i18n="stat-slots">即时存档槽位</div>
+          <div class="stat-sub" data-i18n="stat-slots-sub">带预览图与自动存档</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== ABOUT ====== -->
+  <section id="about" class="section">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-text fade-in-up">
+          <h2 data-i18n="about-title">RetroDroid 是什么？</h2>
+          <p data-i18n="about-p1">RetroDroid 是 <strong>AloysHF 模拟器家族</strong>的 Android 门户：它自己不模拟任何硬件，而是把家族中的九个模拟器核心以 libretro 核心的形式打包进同一个 APK。</p>
+          <p data-i18n="about-p2">游戏与固件放在设备上固定的文件夹里，打开应用直接选择即可游玩——没有核心下载器，没有联网配置，一切开箱即用。</p>
+          <div class="about-points">
+            <div class="about-point"><span class="point-dot"></span><span data-i18n="about-point1">核心随 APK 一起更新，永远保持一致</span></div>
+            <div class="about-point"><span class="point-dot"></span><span data-i18n="about-point2">系统列表由每个核心的 android.json 档案自动生成</span></div>
+            <div class="about-point"><span class="point-dot"></span><span data-i18n="about-point3">不内置任何游戏或固件，只运行你自己的内容</span></div>
+          </div>
+        </div>
+        <div class="about-visual fade-in-up">
+          <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="app-bar">
+                <span class="app-dot"></span>
+                <span class="app-title">RetroDroid</span>
+              </div>
+              <div class="app-lib">
+                <div class="app-lib-path">/sdcard/RetroDroid</div>
+                <div class="app-row">
+                  <span class="app-icon i-green">N32</span>
+                  <div class="app-row-text"><strong>Native32</strong><small>native32emu</small></div>
+                  <span class="app-chev">›</span>
+                </div>
+                <div class="app-row">
+                  <span class="app-icon i-cyan">SP8</span>
+                  <div class="app-row-text"><strong>WooBooKong</strong><small>spmp8000</small></div>
+                  <span class="app-chev">›</span>
+                </div>
+                <div class="app-row">
+                  <span class="app-icon i-amber">CBR</span>
+                  <div class="app-row-text"><strong>Coolbar</strong><small>coolbar</small></div>
+                  <span class="app-chev">›</span>
+                </div>
+                <div class="app-row">
+                  <span class="app-icon i-cyan">A32</span>
+                  <div class="app-row-text"><strong>Dingoo A320</strong><small>dingoo</small></div>
+                  <span class="app-chev">›</span>
+                </div>
+                <div class="app-row">
+                  <span class="app-icon i-green">WQX</span>
+                  <div class="app-row-text"><strong>文曲星 WQX</strong><small>wqx · nc1020</small></div>
+                  <span class="app-chev">›</span>
+                </div>
+              </div>
+              <div class="app-fab">▶</div>
+            </div>
+          </div>
+          <div class="float-chip c1" data-i18n="chip-slots">5 个存档槽位 · 带预览</div>
+          <div class="float-chip c2" data-i18n="chip-auto">退出自动存档</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== ARCHITECTURE ====== -->
+  <section id="architecture" class="section section-dark">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="arch-title">技术架构</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="arch-subtitle">从 Compose 界面到 libretro 核心，四层清晰分明</p>
+      <div class="arch-stack fade-in-up">
+        <div class="arch-layer l-ui">
+          <div class="arch-layer-head">
+            <span class="arch-label" data-i18n="arch-ui-label">界面层</span>
+            <strong>Kotlin / Jetpack Compose</strong>
+          </div>
+          <p data-i18n="arch-ui-sub">系统列表 · 固定本机游戏库 · 暂停菜单 · 存档管理</p>
+        </div>
+        <div class="arch-connector"><span></span></div>
+        <div class="arch-layer l-jni">
+          <div class="arch-layer-head">
+            <span class="arch-label">JNI</span>
+            <strong>NativeCore</strong>
+          </div>
+          <p data-i18n="arch-jni-sub">Kotlin 与 Rust 之间的桥接层</p>
+        </div>
+        <div class="arch-connector"><span></span></div>
+        <div class="arch-layer l-fe">
+          <div class="arch-layer-head">
+            <span class="arch-label" data-i18n="arch-fe-label">前端层</span>
+            <strong>Rust · retro-frontend</strong>
+          </div>
+          <div class="arch-chips">
+            <span>dlopen 核心</span><span>env 回调</span><span data-i18n="arch-chip-video">视频 blit</span><span data-i18n="arch-chip-audio">音频环形缓冲</span><span data-i18n="arch-chip-input">输入</span><span data-i18n="arch-chip-save">即时存档</span>
+          </div>
+        </div>
+        <div class="arch-connector"><span></span></div>
+        <div class="arch-layer l-cores">
+          <div class="arch-layer-head">
+            <span class="arch-label" data-i18n="arch-cores-label">核心层</span>
+            <strong>libretro cores</strong>
+          </div>
+          <p data-i18n="arch-cores-sub">9 个核心以 .so 形式打包在 APK 的 jniLibs 中，运行时按需 dlopen</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== SYSTEMS ====== -->
+  <section id="systems" class="section">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="sys-title">支持系统</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="sys-subtitle">九个模拟器核心，随 APK 一并内置</p>
+      <div id="systems-dynamic" class="fade-in-up"></div>
+    </div>
+  </section>
+
+  <!-- ====== FEATURES ====== -->
+  <section id="features" class="section section-dark">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="feat-title">核心特性</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="feat-subtitle">为掌上游戏库而设计的每一个细节</p>
+      <div class="features-grid">
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3 data-i18n="feat-bundle-title">核心全内置</h3>
+          <p data-i18n="feat-bundle-desc">九个模拟器核心全部打包进 APK，没有任何应用内下载或联网校验，装好就能离线畅玩。</p>
+        </div>
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          </div>
+          <h3 data-i18n="feat-lib-title">固定本机游戏库</h3>
+          <p data-i18n="feat-lib-desc">游戏放在 /sdcard/RetroDroid 固定目录下，首次启动自动建好目录树，放入文件刷新即见。</p>
+        </div>
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </div>
+          <h3 data-i18n="feat-save-title">即时存档与续玩</h3>
+          <p data-i18n="feat-save-desc">五个存档槽位带画面预览；退出游戏时自动保存，下次启动询问是否从上次继续。</p>
+        </div>
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <h3 data-i18n="feat-pause-title">强大暂停菜单</h3>
+          <p data-i18n="feat-pause-desc">游戏内截图、主题/方向/旋转/缩放等画面设置与核心选项，全部集中在暂停菜单里。</p>
+        </div>
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <h3 data-i18n="feat-folder-title">文件夹式浏览</h3>
+          <p data-i18n="feat-folder-desc">子文件夹排在游戏之前、逐层进入，返回手势逐层退出——再大的游戏库也井井有条。</p>
+        </div>
+        <div class="feature-card fade-in-up">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 data-i18n="feat-profile-title">档案即系统</h3>
+          <p data-i18n="feat-profile-desc">每个核心用一份 android.json 档案描述自己，应用据此生成系统注册表——接入新系统只需核心加档案。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== QUICK START ====== -->
+  <section id="quickstart" class="section">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="qs-title">快速上手</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="qs-subtitle">三步开始，或者从源码自己构建</p>
+      <div class="quickstart-grid">
+        <div class="quickstart-card fade-in-up">
+          <div class="qs-header">
+            <span class="qs-icon">📱</span>
+            <h3 data-i18n="qs-install">安装</h3>
+          </div>
+          <div class="qs-steps">
+            <div class="qs-step">
+              <span class="qs-num">1</span>
+              <div>
+                <p data-i18n="qs-install-1">下载并安装 APK</p>
+                <code data-i18n="qs-install-1-sub">Releases 提供 arm64-v8a / x86_64 单 ABI 与 universal 版本</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">2</span>
+              <div>
+                <p data-i18n="qs-install-2">授予「所有文件访问」权限</p>
+                <code data-i18n="qs-install-2-sub">首次启动时会自动创建 RetroDroid 目录树</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">3</span>
+              <div>
+                <p data-i18n="qs-install-3">选择游戏，开玩</p>
+                <code data-i18n="qs-install-3-sub">WQX 没有游戏内容，直接选择机型启动固件</code>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="quickstart-card fade-in-up">
+          <div class="qs-header">
+            <span class="qs-icon">📂</span>
+            <h3 data-i18n="qs-library">放置游戏</h3>
+          </div>
+          <div class="qs-steps">
+            <div class="qs-step">
+              <span class="qs-num">1</span>
+              <div>
+                <p data-i18n="qs-lib-1">把游戏放进对应系统目录</p>
+                <code>/sdcard/RetroDroid/ROMs/&lt;system&gt;/</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">2</span>
+              <div>
+                <p data-i18n="qs-lib-2">固件放在 BIOS 目录</p>
+                <code>/sdcard/RetroDroid/BIOS/&lt;system&gt;/</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">3</span>
+              <div>
+                <p data-i18n="qs-lib-3">刷新游戏列表</p>
+                <code data-i18n="qs-lib-3-sub">文件名区分大小写；光盘游戏把 .cue 与轨道放在一起</code>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="quickstart-card fade-in-up">
+          <div class="qs-header">
+            <span class="qs-icon">🔨</span>
+            <h3 data-i18n="qs-build">从源码构建</h3>
+          </div>
+          <div class="qs-steps">
+            <div class="qs-step">
+              <span class="qs-num">1</span>
+              <div>
+                <p data-i18n="qs-build-1">准备 Rust + NDK r27+ + JDK 17</p>
+                <code>rustup target add aarch64-linux-android x86_64-linux-android</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">2</span>
+              <div>
+                <p data-i18n="qs-build-2">一条脚本构建全部</p>
+                <code>./scripts/build-apk.sh assembleRelease</code>
+              </div>
+            </div>
+            <div class="qs-step">
+              <span class="qs-num">3</span>
+              <div>
+                <p data-i18n="qs-build-3">或本地调试核心</p>
+                <code>cp cores/local.env.example cores/local.env</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== FAMILY ====== -->
+  <section id="family" class="section section-dark">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="fam-title">AloysHF 模拟器家族</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="fam-subtitle">RetroDroid 的每个核心，都来自这些独立项目</p>
+      <div id="family-grid" class="family-grid fade-in-up"></div>
+      <p class="family-note fade-in-up" data-i18n="fam-note">RetroDroid 本体采用 BSD-3-Clause 许可；GPL-3.0 核心以独立动态库形式打包，完整源码发布在各自的仓库中。</p>
+    </div>
+  </section>
+
+  <!-- ====== COMMUNITY ====== -->
+  <section id="community" class="section">
+    <div class="container">
+      <h2 class="section-title fade-in-up" data-i18n="com-title">加入社区</h2>
+      <p class="section-subtitle fade-in-up" data-i18n="com-subtitle">反馈问题、交流玩法、追踪最新进展</p>
+      <div class="community-grid">
+        <a href="https://discord.gg/E4SQjXUkZy" class="community-card discord fade-in-up" target="_blank" rel="noopener">
+          <div class="community-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          </div>
+          <h3>Discord</h3>
+          <p data-i18n="com-discord-desc">国际社区，与全球玩家交流</p>
+          <span class="community-cta" data-i18n="com-join">立即加入 →</span>
+        </a>
+        <a href="https://qm.qq.com/q/LAO7DKAWUC" class="community-card qq fade-in-up" target="_blank" rel="noopener">
+          <div class="community-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 2c-5.156 0-9.342 3.95-9.342 8.822 0 .79.109 1.558.313 2.29-.28.55-.518 1.16-.68 1.848-.53 2.23.13 4.34.13 4.34s1.75-.09 3.11-1.31c1.63.94 3.62 1.5 5.76 1.53l.35.002c5.156 0 9.34-3.95 9.34-8.82C21.184 5.95 17 2 12.003 2zm.14 15.06c-4.4-.06-7.94-2.9-7.94-6.35 0-3.46 3.55-6.26 7.94-6.26 4.39 0 7.94 2.8 7.94 6.26 0 3.45-3.54 6.29-7.94 6.35z" transform="scale(0.95) translate(0.6,0.6)"/></svg>
+          </div>
+          <h3>QQ 群</h3>
+          <p data-i18n="com-qq-desc">中文社区，交流更接地气</p>
+          <span class="community-cta" data-i18n="com-join-qq">一键加群 →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== FOOTER ====== -->
+  <footer id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-row">
+            <img src="assets/favicon.svg" alt="RetroDroid" width="36" height="36">
+            <span class="footer-name">RetroDroid</span>
+          </div>
+          <p data-i18n="footer-desc">AloysHF 模拟器家族的 Android 全能 libretro 前端</p>
+        </div>
+        <div class="footer-links">
+          <h4 data-i18n="footer-project">项目</h4>
+          <a href="https://github.com/AloysHF/RetroDroid" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/AloysHF/RetroDroid/releases" target="_blank" rel="noopener">Releases</a>
+          <a href="https://github.com/AloysHF/RetroDroid/releases/tag/nightly-build" target="_blank" rel="noopener" data-i18n="footer-nightly">Nightly 构建</a>
+          <a href="https://github.com/AloysHF/RetroDroid/blob/master/docs/Core-Contract.md" target="_blank" rel="noopener" data-i18n="footer-contract">核心契约</a>
+        </div>
+        <div class="footer-links">
+          <h4 data-i18n="footer-community">社区</h4>
+          <a href="https://discord.gg/E4SQjXUkZy" target="_blank" rel="noopener">Discord</a>
+          <a href="https://qm.qq.com/q/LAO7DKAWUC" target="_blank" rel="noopener">QQ Group</a>
+        </div>
+        <div class="footer-links">
+          <h4 data-i18n="footer-family">家族</h4>
+          <a href="https://github.com/AloysHF/Native32Emu" target="_blank" rel="noopener">Native32Emu</a>
+          <a href="https://github.com/AloysHF/WQXEmu" target="_blank" rel="noopener">WQXEmu</a>
+          <a href="https://github.com/AloysHF" target="_blank" rel="noopener" data-i18n="footer-all-repos">全部仓库 →</a>
+        </div>
+      </div>
+      <div class="footer-legal" data-i18n="footer-legal">RetroDroid 不包含任何游戏或主机固件，用户只能运行自己拥有版权的内容。各核心保留其原始许可证。</div>
+      <div class="footer-bottom">
+        <p data-i18n="footer-copy">BSD 3-Clause License &copy; 2026 Aloys. Built with 🦀 Rust + ☕ Kotlin.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
