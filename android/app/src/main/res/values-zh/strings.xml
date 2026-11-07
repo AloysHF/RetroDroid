@@ -175,7 +175,7 @@
     <string name="help_section_setup">准备工作</string>
     <string name="help_setup_access">应用请求时请授予「所有文件访问」权限，否则无法读取游戏库。</string>
     <string name="help_setup_structure">目录结构是固定的：每个系统有一个游戏目录，以及一个存放该系统所需固件的目录。</string>
-    <string name="help_setup_tree">ROMs/&lt;system&gt;/ — 游戏\nBIOS/&lt;system&gt;/&lt;model&gt;/ — 固件</string>
+    <string name="help_setup_tree">ROMS/&lt;system&gt;/ — 游戏\nBIOS/&lt;system&gt;/&lt;model&gt;/ — 固件</string>
     <string name="help_setup_refresh">复制文件后，进入对应系统点「刷新」。返回首页时游戏数量会自动更新。</string>
     <string name="help_section_games">添加游戏</string>
     <string name="help_games_intro">把各系统的游戏复制到各自的目录。只扫描下面列出的扩展名（不区分大小写），部分系统还支持 .zip 资源包。</string>
@@ -192,7 +192,7 @@
     <string name="help_section_playing">游戏操作</string>
     <string name="help_playing_body">点按游戏即可开始。按返回键打开暂停菜单：可用带预览的五个存档位存读档、截图、不离开游戏直接修改设置、重置、打开核心设置和退出。离开游戏时会自动存档，下次启动可直接继续。屏幕按键对应原机按键；词典类系统使用屏幕键盘。</string>
     <string name="help_section_trouble">常见问题</string>
-    <string name="help_trouble_game">游戏没有出现：检查扩展名，确认放在正确的 ROMs/&lt;system&gt; 目录，然后点「刷新」。</string>
+    <string name="help_trouble_game">游戏没有出现：检查扩展名，确认放在正确的 ROMS/&lt;system&gt; 目录，然后点「刷新」。</string>
     <string name="help_trouble_firmware">未识别固件：逐字核对文件名与目录拼写，然后点「刷新」或重启应用。</string>
     <string name="help_trouble_access">完全找不到文件：在首页卡片中授予「所有文件访问」权限。</string>
     <string name="external_pick_system">选择打开方式</string>

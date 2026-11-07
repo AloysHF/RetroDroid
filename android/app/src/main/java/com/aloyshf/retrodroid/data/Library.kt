@@ -13,7 +13,7 @@ import java.util.Locale
 
 /**
  * The fixed, user-visible game library at /sdcard/RetroDroid:
- * ROMs live in ROMs/<system>/ and firmware in BIOS/<system>/<model>/. The
+ * ROMs live in ROMS/<system>/ and firmware in BIOS/<system>/<model>/. The
  * core's own folder prefix (bbkemu/, wqxemu/, hyperscanemu/) is added when the
  * files are copied into the shared private system root.
  */
@@ -24,7 +24,7 @@ object Library {
 
     fun root(): File = File(Environment.getExternalStorageDirectory(), ROOT_NAME)
 
-    fun romsDir(): File = File(root(), "ROMs")
+    fun romsDir(): File = File(root(), "ROMS")
 
     fun romDir(systemId: String): File = File(romsDir(), systemId)
 
@@ -69,7 +69,7 @@ object Library {
         }
 
     /**
-     * Every supported game below ROMs/<system>/, tagged with the folder that
+     * Every supported game below ROMS/<system>/, tagged with the folder that
      * holds it so the game list can walk the tree instead of showing one flat
      * pile of files.
      */

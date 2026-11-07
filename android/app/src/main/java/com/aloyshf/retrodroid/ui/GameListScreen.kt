@@ -201,7 +201,7 @@ fun GameListScreen(
     // The home screen already names the absolute library root, so the bar only
     // needs the short path — an absolute one gets ellipsized before the folder
     // you are standing in.
-    val folderPath = listOf("ROMs", system.id, folder)
+    val folderPath = listOf("ROMS", system.id, folder)
         .filter { it.isNotEmpty() }
         .joinToString("/")
     // A query searches the whole system, so games buried in subfolders are

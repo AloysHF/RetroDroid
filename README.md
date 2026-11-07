@@ -80,7 +80,7 @@ there is nothing to pick on every launch:
 
 ```
 /sdcard/RetroDroid/
-├── ROMs/
+├── ROMS/
 │   ├── native32/
 │   ├── coolbar/
 │   ├── dingoo/
@@ -123,11 +123,11 @@ there is nothing to pick on every launch:
    Leaving a game writes an automatic save; the next launch offers to continue
    from it. The back gesture returns to the game list.
 
-Games are opened in place from the library. Folders below `ROMs/<system>/` are
+Games are opened in place from the library. Folders below `ROMS/<system>/` are
 listed before the games of the current folder and open one level at a time, so
 a large library stays browsable; the back arrow and the back gesture step out
 of a folder one level. For disc-based systems keep the `.cue` sheet next to its
-tracks (`ROMs/playdia/game.cue` and `ROMs/playdia/game.bin`).
+tracks (`ROMS/playdia/game.cue` and `ROMS/playdia/game.bin`).
 
 ### Launching from a front-end
 

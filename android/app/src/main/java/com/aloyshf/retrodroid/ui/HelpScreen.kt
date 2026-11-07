@@ -160,7 +160,7 @@ private fun GamesFolderRow(system: SystemInfo, language: String) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                "ROMs/${system.id}",
+                "ROMS/${system.id}",
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
                 color = MaterialTheme.colorScheme.primary,

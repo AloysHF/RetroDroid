@@ -156,7 +156,7 @@ fun HomeScreen(
                 SystemCard(
                     system = system,
                     language = language,
-                    label = "ROMs/${system.id}",
+                    label = "ROMS/${system.id}",
                     count = row?.count,
                     firmwareMissing = row?.firmwareMissing == true,
                     models = remember(system) { system.models().map { it.label } },

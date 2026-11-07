@@ -4,7 +4,7 @@ import java.util.Locale
 
 /**
  * Walks the flat result of [Library.scanGames] one folder at a time. Folder
- * paths are relative to ROMs/<system>/, '/'-separated, and "" is the system
+ * paths are relative to ROMS/<system>/, '/'-separated, and "" is the system
  * root. Only folders that hold a supported game somewhere below them exist,
  * so the tree never shows empty directories.
  */

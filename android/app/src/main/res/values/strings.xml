@@ -175,7 +175,7 @@
     <string name="help_section_setup">Library setup</string>
     <string name="help_setup_access">Grant “All files access” when the app asks, otherwise the library cannot be read.</string>
     <string name="help_setup_structure">The folder layout is fixed: one folder per system for games, and one for the firmware that system needs.</string>
-    <string name="help_setup_tree">ROMs/&lt;system&gt;/ — games\nBIOS/&lt;system&gt;/&lt;model&gt;/ — firmware</string>
+    <string name="help_setup_tree">ROMS/&lt;system&gt;/ — games\nBIOS/&lt;system&gt;/&lt;model&gt;/ — firmware</string>
     <string name="help_setup_refresh">After copying files, open the system and tap Refresh. Game counts on the home screen update when you return.</string>
     <string name="help_section_games">Adding games</string>
     <string name="help_games_intro">Copy each system’s games into its own folder. Only the extensions listed below are scanned, regardless of case; some systems also accept .zip packages.</string>
@@ -192,7 +192,7 @@
     <string name="help_section_playing">Playing</string>
     <string name="help_playing_body">Tap a game to start it. Press Back for the pause menu: save or load one of five slots with previews, take a screenshot, change settings without leaving the game, reset, open core options and exit. The game is saved automatically when you leave, and the next launch offers to continue from that point. On-screen buttons mirror the original controls; dictionary systems use an on-screen keyboard.</string>
     <string name="help_section_trouble">Troubleshooting</string>
-    <string name="help_trouble_game">A game does not appear — check its extension and that it sits under the right ROMs/&lt;system&gt; folder, then tap Refresh.</string>
+    <string name="help_trouble_game">A game does not appear — check its extension and that it sits under the right ROMS/&lt;system&gt; folder, then tap Refresh.</string>
     <string name="help_trouble_firmware">Firmware is not detected — compare file names and folder spelling letter by letter, then tap Refresh or restart the app.</string>
     <string name="help_trouble_access">Nothing is found at all — grant All files access on the home screen card.</string>
     <string name="external_pick_system">Open with</string>

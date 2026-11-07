@@ -121,7 +121,7 @@ sealed interface Screen {
     /** Help returns to the screen it was opened from. */
     data class Help(val fromSettings: Boolean = false) : Screen
 
-    /** Games of [system], browsed in [folder] (relative to ROMs/<system>, "" is the top). */
+    /** Games of [system], browsed in [folder] (relative to ROMS/<system>, "" is the top). */
     data class Games(val system: SystemInfo, val folder: String = "") : Screen
 
     data class Play(val system: SystemInfo, val game: RomEntry?, val folder: String = "") : Screen
