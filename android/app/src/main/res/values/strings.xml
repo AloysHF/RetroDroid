@@ -132,6 +132,8 @@
     <string name="settings_orientation_system">Follow system</string>
     <string name="settings_orientation_portrait">Portrait</string>
     <string name="settings_orientation_landscape">Landscape</string>
+    <string name="settings_controls_hide">Hide on-screen controls with gamepad</string>
+    <string name="settings_controls_hide_summary">Hide the virtual pad while a game controller is connected</string>
     <string name="settings_section_general">General</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_language">Language</string>
