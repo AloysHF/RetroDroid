@@ -24,5 +24,10 @@ android/app/src/main/jniLibs/**/*.so
 /cores/local.env
 /build/
 
+# Local agent instructions
+/AGENTS.md
+
+.claude/
+
 # Local scratch
 /tmp/
