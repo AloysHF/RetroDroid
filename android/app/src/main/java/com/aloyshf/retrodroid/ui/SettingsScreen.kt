@@ -78,6 +78,7 @@ fun SettingsScreen(
     var languageDialog by remember { mutableStateOf(false) }
     var orientation by remember { mutableStateOf(prefs.screenOrientation()) }
     var orientationDialog by remember { mutableStateOf(false) }
+    var hideControlsWithGamepad by remember { mutableStateOf(prefs.hideControlsWithGamepad()) }
     var autoUpdateCheck by remember { mutableStateOf(prefs.autoUpdateCheck()) }
     var checkingUpdate by remember { mutableStateOf(false) }
     var updateResult by remember { mutableStateOf<UpdateResult?>(null) }
@@ -277,6 +278,19 @@ fun SettingsScreen(
                 summary = stringResource(R.string.settings_orientation_summary),
                 value = stringResource(orientationLabel(orientation)),
                 onClick = { orientationDialog = true },
+            )
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_controls_hide),
+                summary = stringResource(R.string.settings_controls_hide_summary),
+                checked = hideControlsWithGamepad,
+                onCheckedChange = { enabled ->
+                    hideControlsWithGamepad = enabled
+                    prefs.setHideControlsWithGamepad(enabled)
+                },
             )
         }
 

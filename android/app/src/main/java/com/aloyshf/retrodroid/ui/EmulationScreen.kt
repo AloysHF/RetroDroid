@@ -50,6 +50,7 @@ import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -91,8 +92,10 @@ fun EmulationScreen(
     val prefs = remember { Prefs(context) }
     val audio = remember { AudioPlayer() }
     val pad = remember { PadState() }
+    val gamepadConnected = rememberGamepadConnected()
     val scope = rememberCoroutineScope()
     val focus = remember { FocusRequester() }
+    val view = LocalView.current
 
     var rotation by remember { mutableIntStateOf(prefs.rotation(system)) }
     var scaling by remember { mutableStateOf(prefs.scaling(system.id)) }
@@ -198,6 +201,23 @@ fun EmulationScreen(
 
     LaunchedEffect(menuOpen, optionsOpen, resumePrompt) {
         NativeCore.nativePause(menuOpen || optionsOpen || resumePrompt)
+        // Hardware-held buttons must not leak into the game across a pause.
+        if (menuOpen || optionsOpen || resumePrompt) pad.clear()
+    }
+
+    // A gamepad that disconnects mid-press would otherwise leave bits stuck.
+    LaunchedEffect(gamepadConnected) {
+        if (!gamepadConnected) pad.clear()
+    }
+
+    // Analog sticks only surface as generic motion events, which Compose key
+    // handlers never see; listen on the root view so they still reach us.
+    DisposableEffect(view) {
+        view.setOnGenericMotionListener { _, event ->
+            if (menuOpen || optionsOpen || resumePrompt) return@setOnGenericMotionListener false
+            applyGamepadMotion(event, pad)
+        }
+        onDispose { view.setOnGenericMotionListener(null) }
     }
 
     LaunchedEffect(Unit) {
@@ -361,6 +381,29 @@ fun EmulationScreen(
                     return@onKeyEvent false
                 }
                 if (menuOpen || optionsOpen || resumePrompt) return@onKeyEvent false
+                // Controller keys are matched by source so a hardware
+                // keyboard's arrow keys keep reaching keyboard-based cores.
+                val fromGamepad = isGamepadSource(event.nativeKeyEvent.source)
+                // The controller home/menu button opens the pause menu instead
+                // of reaching the game.
+                if (code == KeyEvent.KEYCODE_BUTTON_MODE) {
+                    // Key repeats re-set the same state, so no repeat guard
+                    // is needed here.
+                    if (event.type == KeyEventType.KeyDown) {
+                        pausePage = PausePage.MAIN
+                        menuOpen = true
+                    }
+                    return@onKeyEvent true
+                }
+                val padBit = if (fromGamepad) gamepadButtonBit(code) else null
+                if (padBit != null) {
+                    when (event.type) {
+                        KeyEventType.KeyDown -> pad.set(padBit, true)
+                        KeyEventType.KeyUp -> pad.set(padBit, false)
+                        else -> return@onKeyEvent false
+                    }
+                    return@onKeyEvent true
+                }
                 when (event.type) {
                     KeyEventType.KeyDown -> {
                         NativeCore.nativeSetKey(code, true)
@@ -463,7 +506,9 @@ fun EmulationScreen(
                 )
             }
 
-            if (!failed && !menuOpen) {
+            // Virtual controls take a back seat once a real controller is
+            // plugged in, unless the user opts out of the auto-hide.
+            if (!failed && !menuOpen && (!gamepadConnected || !prefs.hideControlsWithGamepad())) {
                 ControlOverlay(
                     preset = system.input,
                     state = pad,

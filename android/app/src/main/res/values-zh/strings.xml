@@ -132,6 +132,8 @@
     <string name="settings_orientation_system">跟随系统</string>
     <string name="settings_orientation_portrait">竖屏</string>
     <string name="settings_orientation_landscape">横屏</string>
+    <string name="settings_controls_hide">手柄接入时隐藏屏幕按键</string>
+    <string name="settings_controls_hide_summary">检测到游戏手柄时自动隐藏虚拟按键</string>
     <string name="settings_section_general">通用</string>
     <string name="settings_section_support">支持</string>
     <string name="settings_language">语言</string>

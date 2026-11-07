@@ -74,6 +74,12 @@ class Prefs(context: Context) {
         prefs.edit().putBoolean("auto_update_check", enabled).apply()
     }
 
+    fun hideControlsWithGamepad(): Boolean = prefs.getBoolean("hide_controls_with_gamepad", true)
+
+    fun setHideControlsWithGamepad(enabled: Boolean) {
+        prefs.edit().putBoolean("hide_controls_with_gamepad", enabled).apply()
+    }
+
     fun lastUpdateCheck(): Long = prefs.getLong("last_update_check", 0L)
 
     fun setLastUpdateCheck(time: Long) {
