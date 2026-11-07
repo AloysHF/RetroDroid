@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://aloyshf.github.io/RetroDroid/"><img src="https://img.shields.io/badge/Website-aloyshf.github.io%2FRetroDroid-35E0F0?logo=githubpages&logoColor=white" alt="Website"></a>
+  <a href="https://aloyshf.github.io/RetroDroid/"><img src="https://img.shields.io/badge/Website-RetroDroid-35E0F0?logo=githubpages&logoColor=white" alt="Website"></a>
   <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml"><img src="https://github.com/AloysHF/RetroDroid/actions/workflows/android.yml/badge.svg" alt="Android APK"></a>
   <a href="https://github.com/AloysHF/RetroDroid/releases/latest"><img src="https://img.shields.io/github/v/release/AloysHF/RetroDroid" alt="Release"></a>
