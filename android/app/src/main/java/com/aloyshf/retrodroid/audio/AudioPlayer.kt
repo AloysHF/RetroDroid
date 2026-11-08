@@ -3,6 +3,7 @@ package com.aloyshf.retrodroid.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.util.Log
 import com.aloyshf.retrodroid.core.NativeCore
 
 /**
@@ -32,7 +33,8 @@ class AudioPlayer {
         // constant audio-vs-video lag. Fifty milliseconds still absorbs frame
         // jitter without being audible as a delay.
         val bufferSize = maxOf(minBuffer, sampleRate / 20 * 4)
-        val audio = AudioTrack.Builder()
+        Log.i("RetroDroid", "AudioTrack buffer ${bufferSize / 4} frames (min $minBuffer bytes)")
+        val builder = AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_GAME)
@@ -48,7 +50,10 @@ class AudioPlayer {
             )
             .setTransferMode(AudioTrack.MODE_STREAM)
             .setBufferSizeInBytes(bufferSize)
-            .build()
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            builder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
+        }
+        val audio = builder.build()
 
         audio.play()
         track = audio
