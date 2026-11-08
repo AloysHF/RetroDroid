@@ -3,11 +3,20 @@
 //! The core produces samples inside `retro_run`, the Kotlin side consumes them
 //! from an `AudioTrack` thread. The ring never allocates after construction: a
 //! slow consumer drops the oldest audio instead of stalling emulation.
+//!
+//! Capacity tracks the core's output sample rate and stays small on purpose:
+//! everything the ring holds is audio the player has not heard yet, so a large
+//! ring turns into a growing gap between what is on screen and what comes out
+//! of the speaker.
 
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
-/// Two seconds of stereo audio at 48 kHz.
-const CAPACITY_FRAMES: usize = 48_000 * 2;
+/// Fraction of a second of audio the ring buffers.
+const CAPACITY_SECONDS: f64 = 0.2;
+
+/// Floor for the ring capacity, in stereo frames, so tiny or unset sample
+/// rates cannot produce a degenerate ring.
+const CAPACITY_FLOOR_FRAMES: usize = 4_096;
 
 /// Interleaved stereo samples, indexed by frame.
 pub struct AudioRing {
@@ -27,7 +36,7 @@ impl AudioRing {
         }
     }
 
-    #[cfg(test)]
+    /// Number of stereo frames this ring can hold.
     pub fn capacity_frames(&self) -> usize {
         self.data.len() / 2
     }
@@ -94,7 +103,19 @@ impl AudioRing {
 static AUDIO: OnceLock<Mutex<AudioRing>> = OnceLock::new();
 
 pub fn audio() -> &'static Mutex<AudioRing> {
-    AUDIO.get_or_init(|| Mutex::new(AudioRing::new(CAPACITY_FRAMES)))
+    AUDIO.get_or_init(|| {
+        let sample_rate = crate::env::av_info().sample_rate;
+        Mutex::new(AudioRing::new(capacity_frames(sample_rate)))
+    })
+}
+
+/// Ring capacity in stereo frames for a core output rate: a short latency
+/// window rather than a backlog reservoir.
+fn capacity_frames(sample_rate: f64) -> usize {
+    if sample_rate <= 0.0 {
+        return CAPACITY_FLOOR_FRAMES;
+    }
+    ((sample_rate * CAPACITY_SECONDS) as usize).max(CAPACITY_FLOOR_FRAMES)
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -104,7 +125,14 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 pub fn reset() {
-    lock(audio()).clear();
+    let mut ring = lock(audio());
+    let wanted = capacity_frames(crate::env::av_info().sample_rate);
+    if ring.capacity_frames() != wanted {
+        // A different core (or a re-negotiated rate) means a different window.
+        *ring = AudioRing::new(wanted);
+    } else {
+        ring.clear();
+    }
 }
 
 /// Consume interleaved stereo samples for the audio thread.
@@ -128,6 +156,13 @@ pub unsafe extern "C" fn audio_sample_batch(data: *const i16, frames: usize) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn capacity_tracks_sample_rate() {
+        assert_eq!(capacity_frames(22_050.0), 4_410);
+        assert_eq!(capacity_frames(48_000.0), 9_600);
+        assert_eq!(capacity_frames(0.0), CAPACITY_FLOOR_FRAMES);
+    }
 
     #[test]
     fn push_pop_roundtrip() {
