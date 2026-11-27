@@ -8,6 +8,7 @@ plugins {
 android {
     namespace = "com.aloyshf.retrodroid"
     compileSdk = 37
+    compileSdkMinor = 1
 
     defaultConfig {
         applicationId = "com.aloyshf.retrodroid"
